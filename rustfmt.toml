@@ -1,0 +1,15 @@
+# Rust format configuration file
+# https://github.com/rust-lang/rustfmt/blob/master/Configurations.md
+# note that this file uses some options that are only available on nightly
+# when developing on stable, you can still run it with `cargo +nightly fmt`
+indent_style = "Visual"
+control_brace_style = "AlwaysNextLine"
+use_small_heuristics = "Max"
+brace_style = "AlwaysNextLine"
+where_single_line = true
+imports_indent = "Visual"
+trailing_comma = "Never"
+overflow_delimited_expr = true
+max_width = 110
+reorder_modules = false
+reorder_imports = false
