@@ -33,17 +33,17 @@ enum MoveKind
 }
 
 /// all possible amplitudes for a move
-#[derive(IntoEnumIterator, Copy, Clone)]
+#[derive(IntoEnumIterator, Copy, Clone, PartialEq)]
 enum Amplitude
 {
     /// an absence of turn
     Noturn,
     /// 90° turn clockwise
     Clockwise,
-    /// 90° turn counter-clockwise
-    Counterclockwise,
     /// 180° turn
-    Fullturn
+    Fullturn,
+    /// 90° turn counter-clockwise
+    Counterclockwise
 }
 
 /// describes all possible moves
@@ -60,7 +60,10 @@ impl Move
     fn all_moves() -> Vec<Move>
     {
         MoveKind::into_enum_iter().flat_map(|kind| {
-                                      Amplitude::into_enum_iter().map(move |amplitude| Move { kind,
+                                      Amplitude::into_enum_iter().filter(|amplitude| {
+                                                                     *amplitude != Amplitude::Noturn
+                                                                 })
+                                                                 .map(move |amplitude| Move { kind,
                                                                                               amplitude })
                                   })
                                   .collect()
@@ -166,6 +169,7 @@ impl CompiledMove
 
     /// takes a move and compiles it down to a permutation table (a CompiledMove)
     /// if `preserve_orientation` is set to `true`, move to middle layers will instead be counter moves to lateral layers
+    /// NOTE: this step is too expensive to be run whenever a move needs to be applied, instead it is meant as a preparation step
     fn compile(m: Move, preserve_orientation: bool) -> CompiledMove
     {
         // generates a 90° clockwise move
