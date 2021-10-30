@@ -1,5 +1,8 @@
 //! Describes a Rubik's cube
-use crate::color::{Color, NB_COLORS};
+
+mod color;
+use color::{Color, NB_COLORS};
+mod moves;
 
 /// Number of squares on the side of a cube
 pub const SIZE_SIDE: usize = 3;
