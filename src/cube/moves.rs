@@ -65,13 +65,6 @@ impl Move
                                   })
                                   .collect()
     }
-
-    /// takes a move and compiles it
-    /// if `preserve_orientation` is set to `true`, move to middle layers will instead be counter moves to lateral layers
-    fn compile(self, preserve_orientation: bool) -> CompiledMove
-    {
-        CompiledMove::compile(self, preserve_orientation)
-    }
 }
 
 /// move compiled into a permutation table
@@ -87,7 +80,7 @@ impl CompiledMove
     /// returns a vector containing all possible compiled moves
     fn all_compiled_moves(preserve_orientation: bool) -> Vec<CompiledMove>
     {
-        Move::all_moves().iter().map(|m| m.compile(preserve_orientation)).collect()
+        Move::all_moves().into_iter().map(|m| CompiledMove::compile(m, preserve_orientation)).collect()
     }
 
     /// the identity move, does nothing
@@ -147,50 +140,28 @@ impl CompiledMove
     /// same as compile_clockwise but preserves orientation when applying a middle layer rotation
     fn compile_clockwise_orientation_preserving(kind: MoveKind) -> CompiledMove
     {
-        match kind
+        // one move counterclockwise for each of the parallel layer instead of a a move clockwise
+        let (move1, move2) = match kind
         {
             // the middle layer parallel to the Right and Left faces
-            MoveKind::Middle =>
-            {
-                // one move counterclockwise for each of the parallel layer instead of a a move clockwise
-                let move_right =
-                    Move { kind: MoveKind::Right, amplitude: Amplitude::Counterclockwise }.compile(false);
-                let move_left =
-                    Move { kind: MoveKind::Left, amplitude: Amplitude::Counterclockwise }.compile(false);
-                let mut result = move_right.compose(&move_left);
-                // associate the correct description with the move
-                result.description = Move { kind, amplitude: Amplitude::Clockwise };
-                result
-            }
+            MoveKind::Middle => (Move { kind: MoveKind::Right, amplitude: Amplitude::Counterclockwise },
+                                 Move { kind: MoveKind::Left, amplitude: Amplitude::Counterclockwise }),
             // the middle layer parallel to the Up and Down faces
-            MoveKind::Equator =>
-            {
-                // one move counterclockwise for each of the parallel layer instead of a a move clockwise
-                let move_up =
-                    Move { kind: MoveKind::Up, amplitude: Amplitude::Counterclockwise }.compile(false);
-                let move_down =
-                    Move { kind: MoveKind::Down, amplitude: Amplitude::Counterclockwise }.compile(false);
-                let mut result = move_up.compose(&move_down);
-                // associate the correct description with the move
-                result.description = Move { kind, amplitude: Amplitude::Clockwise };
-                result
-            }
+            MoveKind::Equator => (Move { kind: MoveKind::Up, amplitude: Amplitude::Counterclockwise },
+                                  Move { kind: MoveKind::Down, amplitude: Amplitude::Counterclockwise }),
             // the middle layer parallel to the Front and Back faces
-            MoveKind::Side =>
-            {
-                // one move counterclockwise for each of the parallel layer instead of a a move clockwise
-                let move_front =
-                    Move { kind: MoveKind::Front, amplitude: Amplitude::Counterclockwise }.compile(false);
-                let move_back =
-                    Move { kind: MoveKind::Back, amplitude: Amplitude::Counterclockwise }.compile(false);
-                let mut result = move_front.compose(&move_back);
-                // associate the correct description with the move
-                result.description = Move { kind, amplitude: Amplitude::Clockwise };
-                result
-            }
+            MoveKind::Side => (Move { kind: MoveKind::Front, amplitude: Amplitude::Counterclockwise },
+                               Move { kind: MoveKind::Back, amplitude: Amplitude::Counterclockwise }),
             // any non middle layer
-            _ => CompiledMove::compile_clockwise(kind)
-        }
+            _ => return CompiledMove::compile_clockwise(kind)
+        };
+        // compiles the moves and compose the lateral moves
+        let move1 = CompiledMove::compile(move1, false);
+        let move2 = CompiledMove::compile(move2, false);
+        let mut result = move1.compose(&move2);
+        // associate the correct description with the move
+        result.description = Move { kind, amplitude: Amplitude::Clockwise };
+        result
     }
 
     /// takes a move and compiles it down to a permutation table (a CompiledMove)
@@ -198,7 +169,7 @@ impl CompiledMove
     fn compile(m: Move, preserve_orientation: bool) -> CompiledMove
     {
         // generates a 90° clockwise move
-        let mut compiled_move = if preserve_orientation
+        let compiled_move = if preserve_orientation
         {
             CompiledMove::compile_clockwise_orientation_preserving(m.kind)
         }
@@ -207,14 +178,16 @@ impl CompiledMove
             CompiledMove::compile_clockwise(m.kind)
         };
         // applies it several time if needed to obtain the correct amplitude
-        compiled_move.description.amplitude = m.amplitude;
-        match m.amplitude
+        let mut result = match m.amplitude
         {
             Amplitude::Noturn => CompiledMove::identity(),
             Amplitude::Clockwise => compiled_move,
             Amplitude::Fullturn => compiled_move.compose(&compiled_move), // two 90° turns
             Amplitude::Counterclockwise => compiled_move.compose(&compiled_move).compose(&compiled_move) // three 90° turn
-        }
+        };
+        // sets the correct amplitude for the result
+        result.description.amplitude = m.amplitude;
+        result
     }
 
     /// compose with another move to produce a new move
