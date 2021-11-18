@@ -4,7 +4,7 @@
 pub const NB_SQUARES_SIDE: usize = 3;
 
 /// Number of squares on the face of a cube
-const NB_SQUARES_FACE: usize = NB_SQUARES_SIDE * NB_SQUARES_SIDE;
+pub const NB_SQUARES_FACE: usize = NB_SQUARES_SIDE * NB_SQUARES_SIDE;
 
 /// Number of faces on a cube
 pub const NB_FACES: usize = 6;

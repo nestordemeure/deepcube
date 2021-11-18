@@ -1,32 +1,66 @@
-//! Describes a Rubik's cube
+//! Flat representation for a Rubik's cube
+use crate::cube::Cube;
+use super::super::color::Color;
+use super::super::sizes::NB_SQUARES_CUBE;
 
-mod color;
-use color::{Color, NB_COLORS};
-mod moves;
-
-/// A Rubik's cube
+/// A Rubik's cube stored as a flat array of colors
 #[derive(Clone, Debug)]
-pub struct Cube
+pub struct FlatCube
 {
-    squares: [Color; SIZE_CUBE]
+    pub squares: [Color; NB_SQUARES_CUBE]
 }
 
-impl Cube
+impl FlatCube
 {
-    /// produces a new, solved, Rubik's cube
-    fn solved() -> Cube
+    /// takes a FlatCube and returns a Cube
+    fn unflatten(&self) -> Cube
     {
-        let mut squares: [Color; SIZE_CUBE] = [Color::Invalid; SIZE_CUBE];
+        // the cube in which we will store the result
+        let mut result = Cube::solved();
+        // insures that the vector starts sorted
+        debug_assert!(result.blocks.is_sorted_by_key(|block| block.position));
+        let squares = self.squares;
+        let mut index_square = 0;
+        for colors in result.blocks.iter_mut().map(|block| &mut block.color)
+        {
+            let rl = &mut colors.right_left;
+            if *rl != Color::Invalid
+            {
+                *rl = squares[index_square];
+                index_square += 1;
+            }
+            let td = &mut colors.top_down;
+            if *td != Color::Invalid
+            {
+                *td = squares[index_square];
+                index_square += 1;
+            }
+            let fb = &mut colors.front_back;
+            if *fb != Color::Invalid
+            {
+                *fb = squares[index_square];
+                index_square += 1;
+            }
+        }
+        // insures that we used all the squares
+        debug_assert!(index_square == NB_SQUARES_CUBE);
+        result
+    }
+
+    /*/// produces a new, solved, Rubik's cube
+    fn solved() -> FlatCube
+    {
+        let mut squares: [Color; NB_SQUARES_CUBE] = [Color::Invalid; NB_SQUARES_CUBE];
         for i in 0..SIZE_CUBE
         {
             squares[i] = Color::ALL[i / SIZE_FACE];
         }
-        Cube { squares }
-    }
+        FlatCube { squares }
+    }*/
 
-    /// takes a cube and produces a new cube with color switched such that the center of the first face is of the first color, etc
+    /*/// takes a cube and produces a new cube with color switched such that the center of the first face is of the first color, etc
     /// this let us ignore orientation further in the code
-    /// NOTE: it is not equivalent to rotate the cube into a standard orientation
+    /// NOTE: it is not equivalent to rotating the cube into a standard orientation
     fn normalize_orientation(&self) -> Cube
     {
         // builds a mapping to turn colors into expected colors
@@ -47,21 +81,5 @@ impl Cube
         }
         // returns the new square
         Cube { squares }
-    }
-
-    /// takes a face, row and column number, outputs a flat index
-    pub fn flat_index(face: usize, row: usize, col: usize) -> usize
-    {
-        debug_assert!(face < SIZE_FACE);
-        debug_assert!(row < SIZE_SIDE);
-        debug_assert!(col < SIZE_SIDE);
-        face * SIZE_FACE + row * SIZE_SIDE + col
-    }
-
-    /// gets the color of the square at the given index
-    /// NOTE: the indexing used here is less effective than working directly on the flat array
-    pub fn get(&self, face: usize, row: usize, col: usize) -> Color
-    {
-        self.squares[Cube::flat_index(face, row, col)]
-    }
+    }*/
 }

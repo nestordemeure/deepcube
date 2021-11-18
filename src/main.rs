@@ -1,3 +1,4 @@
+#![feature(is_sorted)]
 #[allow(dead_code)]
 mod cube;
 

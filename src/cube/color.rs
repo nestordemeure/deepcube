@@ -1,10 +1,11 @@
 //! Colors and color related operations
+use super::sizes::NB_FACES;
 
 /// one color per face of the cube
-pub const NB_COLORS: usize = 6;
+pub const NB_COLORS: usize = NB_FACES;
 
 /// color of the faces of the cube
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Color
 {
     Red = 0,

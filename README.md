@@ -36,3 +36,7 @@ NA
     - collect data
     - train network
     - use it as an heuristic
+
+## Notes:
+
+The code requires nightly to check if vectors are sorted in debug mode.

@@ -3,14 +3,15 @@ mod color;
 mod moves;
 mod flat;
 use color::Color;
-use sizes::NB_SQUARES_SIDE;
+use sizes::{NB_SQUARES_SIDE, NB_SQUARES_CUBE};
 use moves::{MoveKind, Amplitude, Move};
+use flat::cube::FlatCube;
 
 //---------------------------------------------------------------------------------------
 // Blocks
 
 /// coordinates along the 3 3D axis
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Coordinate3D<T: Copy>
 {
     pub right_left: T,
@@ -113,7 +114,7 @@ impl Block
         let mut block = self.clone();
         if block.should_move(m)
         {
-            for i in 0..m.amplitude.nb_rotations()
+            for _rotation in 0..m.amplitude.nb_rotations()
             {
                 block = block.rotate(m.kind);
             }
@@ -129,38 +130,38 @@ impl Block
 /// this representation makes it particularly easy to implement moves and understand the 3D structure of the cube
 /// however, it is ineficient when one want to apply moves quickly and it waste memory
 
-pub struct Cube3D
+pub struct Cube
 {
     pub blocks: Vec<Block>
 }
 
-impl Cube3D
+impl Cube
 {
     /// produces a new, solved, Rubik's cube
     /// we use the western color scheme as a reference for the colors
     /// https://www.speedsolving.com/wiki/index.php/Western_Color_Scheme
-    fn solved() -> Cube3D
+    pub fn solved() -> Cube
     {
         let mut blocks = Vec::with_capacity(NB_SQUARES_SIDE * NB_SQUARES_SIDE * NB_SQUARES_SIDE);
-        for td in 0..NB_SQUARES_SIDE
+        for rl in 0..NB_SQUARES_SIDE
         {
-            let td_color = [Color::White, Color::Invalid, Color::Blue][td];
-            for rl in 0..NB_SQUARES_SIDE
+            let rl_color = [Color::Red, Color::Invalid, Color::Orange][rl];
+            for td in 0..NB_SQUARES_SIDE
             {
-                let rl_color = [Color::Red, Color::Invalid, Color::Orange][rl];
+                let td_color = [Color::White, Color::Invalid, Color::Blue][td];
                 for fb in 0..NB_SQUARES_SIDE
                 {
                     let fb_color = [Color::Green, Color::Invalid, Color::Yellow][fb];
                     // builds the block with appropriate color and position
                     let color =
                         Coordinate3D { top_down: td_color, right_left: rl_color, front_back: fb_color };
-                    let position = Coordinate3D { top_down: td, right_left: rl, front_back: fb };
+                    let position = Coordinate3D { right_left: rl, top_down: td, front_back: fb };
                     let block = Block { color, position };
                     blocks.push(block)
                 }
             }
         }
-        Cube3D { blocks }
+        Cube { blocks }
     }
 
     /// gets the colors of the square at the given 3D coordinates
@@ -180,15 +181,20 @@ impl Cube3D
     }
 
     /// takes a move and produces a new, twisted, cube by applying the move
-    fn apply_move(&self, m: Move) -> Cube3D
+    pub fn apply_move(&self, m: Move) -> Cube
     {
-        let blocks = self.blocks.iter().map(|block| block.apply_move(m)).collect();
-        Cube3D { blocks }
+        // applies the move to all blocks
+        let mut blocks: Vec<Block> = self.blocks.iter().map(|block| block.apply_move(m)).collect();
+        // sorts the blocks by position to insure reproducibility
+        // this is especially important to make sure flatten always behave identically
+        // (one could move the sort into flatten but it would be inelegant and this function is not efficient anyway)
+        blocks.sort_unstable_by_key(|block| block.position);
+        Cube { blocks }
     }
 
     /// takes a move and produces a new, twisted, cube by applying the move
     /// however, preserves orientation when applying a middle layer rotation
-    fn apply_move_orientation_preserving(&self, m: Move) -> Cube3D
+    pub fn apply_move_orientation_preserving(&self, m: Move) -> Cube
     {
         // rotates the parallel layers instead of the middle layer
         let (kind1, kind2) = match m.kind
@@ -214,14 +220,41 @@ impl Cube3D
         let move2 = Move { kind: kind2, amplitude };
         self.apply_move(move1).apply_move(move2)
     }
+
+    /// takes a cube and outputs a FlatCube suited to fast application of moves
+    pub fn flatten(&self) -> FlatCube
+    {
+        // insures that the vector starts sorted
+        debug_assert!(self.blocks.is_sorted_by_key(|block| block.position));
+        let mut squares: [Color; NB_SQUARES_CUBE] = [Color::Invalid; NB_SQUARES_CUBE];
+        let mut index_square = 0;
+        for colors in self.blocks.iter().map(|block| block.color)
+        {
+            let rl = colors.right_left;
+            if rl != Color::Invalid
+            {
+                squares[index_square] = rl;
+                index_square += 1;
+            }
+            let td = colors.top_down;
+            if td != Color::Invalid
+            {
+                squares[index_square] = td;
+                index_square += 1;
+            }
+            let fb = colors.front_back;
+            if fb != Color::Invalid
+            {
+                squares[index_square] = fb;
+                index_square += 1;
+            }
+        }
+        // insures that we used all the squares
+        debug_assert!(index_square == NB_SQUARES_CUBE);
+        FlatCube { squares }
+    }
 }
 
-// NOTES:
-// flatten:
-// - takes a 3D cube
-// - sort by position
-// - for all colors or all blocks, add to result if it is not indiferent
-//
 // unflatten:
 // - take a solved, newly-generated, 3D cube
 // - sort by position (is it needed or are they sorted by default? they should!)
