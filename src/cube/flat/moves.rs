@@ -4,71 +4,8 @@
 //!
 //! See this website for the classical notations:
 //! http://www.rubiksplace.com/move-notations/
-use enum_iterator::IntoEnumIterator;
 use super::color::Color;
 use crate::cube::{SIZE_SIDE, SIZE_CUBE, Cube};
-
-/// all the slice of the cube that could move
-#[derive(IntoEnumIterator, Copy, Clone)]
-enum MoveKind
-{
-    /// the face facing the solver
-    Front,
-    /// the back face
-    Back,
-    /// the right face
-    Right,
-    /// the left face
-    Left,
-    /// the upper face
-    Up,
-    /// the face opposite to the upper face
-    Down,
-    /// the middle layer parallel to the Right and Left faces
-    Middle,
-    /// the middle layer parallel to the Up and Down faces
-    Equator,
-    /// the middle layer parallel to the Front and Back faces
-    Side
-}
-
-/// all possible amplitudes for a move
-#[derive(IntoEnumIterator, Copy, Clone, PartialEq)]
-enum Amplitude
-{
-    /// an absence of turn
-    Noturn,
-    /// 90° turn clockwise
-    Clockwise,
-    /// 180° turn
-    Fullturn,
-    /// 90° turn counter-clockwise
-    Counterclockwise
-}
-
-/// describes all possible moves
-#[derive(Copy, Clone)]
-struct Move
-{
-    kind: MoveKind,
-    amplitude: Amplitude
-}
-
-impl Move
-{
-    /// returns a vector containing all possible moves
-    fn all_moves() -> Vec<Move>
-    {
-        MoveKind::into_enum_iter().flat_map(|kind| {
-                                      Amplitude::into_enum_iter().filter(|amplitude| {
-                                                                     *amplitude != Amplitude::Noturn
-                                                                 })
-                                                                 .map(move |amplitude| Move { kind,
-                                                                                              amplitude })
-                                  })
-                                  .collect()
-    }
-}
 
 /// move compiled into a permutation table
 /// the compilation step is expensive but needs to be run only once

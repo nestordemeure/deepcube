@@ -1,3 +1,5 @@
+//! Colors and color related operations
+
 /// one color per face of the cube
 pub const NB_COLORS: usize = 6;
 
