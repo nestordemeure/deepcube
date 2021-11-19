@@ -181,20 +181,18 @@ impl Cube
     }
 
     /// takes a move and produces a new, twisted, cube by applying the move
-    pub fn apply_move(&self, m: Move) -> Cube
+    /// does NOT insures that the blocks of the output are sorted
+    pub fn apply_move_unsorted(&self, m: Move) -> Cube
     {
         // applies the move to all blocks
-        let mut blocks: Vec<Block> = self.blocks.iter().map(|block| block.apply_move(m)).collect();
-        // sorts the blocks by position to insure reproducibility
-        // this is especially important to make sure flatten always behave identically
-        // (one could move the sort into flatten but it would be inelegant and this function is not efficient anyway)
-        blocks.sort_unstable_by_key(|block| block.position);
+        let blocks = self.blocks.iter().map(|block| block.apply_move(m)).collect();
         Cube { blocks }
     }
 
     /// takes a move and produces a new, twisted, cube by applying the move
     /// however, preserves orientation when applying a middle layer rotation
-    pub fn apply_move_orientation_preserving(&self, m: Move) -> Cube
+    /// does NOT insures that the blocks of the output are sorted
+    pub fn apply_move_orientation_preserving_unsorted(&self, m: Move) -> Cube
     {
         // rotates the parallel layers instead of the middle layer
         let (kind1, kind2) = match m.kind
@@ -206,7 +204,7 @@ impl Cube
             // the middle layer parallel to the Front and Back faces
             MoveKind::Side => (MoveKind::Front, MoveKind::Back),
             // any non middle layer, we can just apply as usual
-            _ => return self.apply_move(m)
+            _ => return self.apply_move_unsorted(m)
         };
         // converts clockwise motion into counterclockwise motion
         let amplitude = match m.amplitude
@@ -218,14 +216,51 @@ impl Cube
         // applies the two moves
         let move1 = Move { kind: kind1, amplitude };
         let move2 = Move { kind: kind2, amplitude };
-        self.apply_move(move1).apply_move(move2)
+        self.apply_move_unsorted(move1).apply_move_unsorted(move2)
     }
+
+    /// takes a move and produces a new, twisted, cube by applying the move
+    pub fn apply_move(&self, m: Move) -> Cube
+    {
+        let mut cube = self.apply_move_unsorted(m);
+        // sorts the blocks by position to insure reproducibility
+        // this is especially important to make sure flatten always behave identically
+        // (one could move the sort into flatten but it would be inelegant and this function is not efficient anyway)
+        cube.blocks.sort_unstable_by_key(|block| block.position);
+        cube
+    }
+
+    /*/// takes a cube and produces a new cube with color switched such that the center of the first face is of the first color, etc
+    /// this let us ignore orientation further in the code
+    /// NOTE: it is not equivalent to rotating the cube into a standard orientation
+    fn normalize_orientation(&self) -> Cube
+    {
+        // builds a mapping to turn colors into expected colors
+        // uses the fact that we know that the center of each face will be of a different color
+        let mut color_mapping = [Color::Invalid; NB_FACES];
+        for face in 0..NB_FACES
+        {
+            let color_center_face = self.get(face, SIZE_SIDE / 2, SIZE_SIDE / 2);
+            let expected_color = Color::ALL[face];
+            color_mapping[color_center_face as usize] = expected_color;
+        }
+        // maps the squares
+        let mut squares: [Color; SIZE_CUBE] = [Color::Invalid; SIZE_CUBE];
+        for i in 0..SIZE_CUBE
+        {
+            let color = self.squares[i];
+            squares[i] = color_mapping[color as usize]
+        }
+        // returns the new square
+        Cube { squares }
+    }*/
 
     /// takes a cube and outputs a FlatCube suited to fast application of moves
     pub fn flatten(&self) -> FlatCube
     {
         // insures that the vector starts sorted
         debug_assert!(self.blocks.is_sorted_by_key(|block| block.position));
+        // puts the valid colors in the array one after the other
         let mut squares: [Color; NB_SQUARES_CUBE] = [Color::Invalid; NB_SQUARES_CUBE];
         let mut index_square = 0;
         for colors in self.blocks.iter().map(|block| block.color)
@@ -254,8 +289,3 @@ impl Cube
         FlatCube { squares }
     }
 }
-
-// unflatten:
-// - take a solved, newly-generated, 3D cube
-// - sort by position (is it needed or are they sorted by default? they should!)
-// - for all colors or all blocks, if they are not indiferent, replace with the color from the flat cube

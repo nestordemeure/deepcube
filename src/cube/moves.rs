@@ -65,7 +65,7 @@ pub struct Move
 impl Move
 {
     /// returns a vector containing all possible moves
-    fn all_moves() -> Vec<Move>
+    pub fn all_moves() -> Vec<Move>
     {
         MoveKind::into_enum_iter().flat_map(|kind| {
                                       Amplitude::into_enum_iter().map(move |amplitude| Move { kind,

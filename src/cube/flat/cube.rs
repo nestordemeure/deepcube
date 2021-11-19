@@ -2,6 +2,7 @@
 use crate::cube::Cube;
 use super::super::color::Color;
 use super::super::sizes::NB_SQUARES_CUBE;
+use super::moves::FlatMove;
 
 /// A Rubik's cube stored as a flat array of colors
 #[derive(Clone, Debug)]
@@ -12,6 +13,13 @@ pub struct FlatCube
 
 impl FlatCube
 {
+    /// produces a new, solved, Rubik's cube
+    /// note that this operation isn't as cheap as one might intuit
+    fn solved() -> FlatCube
+    {
+        Cube::solved().flatten()
+    }
+
     /// takes a FlatCube and returns a Cube
     fn unflatten(&self) -> Cube
     {
@@ -19,6 +27,7 @@ impl FlatCube
         let mut result = Cube::solved();
         // insures that the vector starts sorted
         debug_assert!(result.blocks.is_sorted_by_key(|block| block.position));
+        // puts the squares back in the 3D cube
         let squares = self.squares;
         let mut index_square = 0;
         for colors in result.blocks.iter_mut().map(|block| &mut block.color)
@@ -47,39 +56,17 @@ impl FlatCube
         result
     }
 
-    /*/// produces a new, solved, Rubik's cube
-    fn solved() -> FlatCube
+    /// takes a move and produces a new, twisted, cube by applying the move
+    /// cube[i] is replaced by cube[index[i]]
+    fn apply_move(&self, m: &FlatMove) -> FlatCube
     {
+        // applies the permutation
         let mut squares: [Color; NB_SQUARES_CUBE] = [Color::Invalid; NB_SQUARES_CUBE];
-        for i in 0..SIZE_CUBE
+        for i in 0..NB_SQUARES_CUBE
         {
-            squares[i] = Color::ALL[i / SIZE_FACE];
-        }
-        FlatCube { squares }
-    }*/
-
-    /*/// takes a cube and produces a new cube with color switched such that the center of the first face is of the first color, etc
-    /// this let us ignore orientation further in the code
-    /// NOTE: it is not equivalent to rotating the cube into a standard orientation
-    fn normalize_orientation(&self) -> Cube
-    {
-        // builds a mapping to turn colors into expected colors
-        // uses the fact that we know that the center of each face will be of a different color
-        let mut color_mapping = [Color::Invalid; NB_FACES];
-        for face in 0..NB_FACES
-        {
-            let color_center_face = self.get(face, SIZE_SIDE / 2, SIZE_SIDE / 2);
-            let expected_color = Color::ALL[face];
-            color_mapping[color_center_face as usize] = expected_color;
-        }
-        // maps the squares
-        let mut squares: [Color; SIZE_CUBE] = [Color::Invalid; SIZE_CUBE];
-        for i in 0..SIZE_CUBE
-        {
-            let color = self.squares[i];
-            squares[i] = color_mapping[color as usize]
+            squares[i] = self.squares[m.permutation[i]];
         }
         // returns the new square
-        Cube { squares }
-    }*/
+        FlatCube { squares }
+    }
 }
