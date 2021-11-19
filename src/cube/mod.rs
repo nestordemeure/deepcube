@@ -21,13 +21,13 @@ pub struct Coordinate3D<T: Copy>
 
 /// one of the tiny colored 3D blocks that make a cube
 #[derive(Clone)]
-pub struct Block
+pub struct Block<ColorType: Copy>
 {
     pub position: Coordinate3D<usize>,
-    pub color: Coordinate3D<Color>
+    pub color: Coordinate3D<ColorType>
 }
 
-impl Block
+impl<ColorType: Copy> Block<ColorType>
 {
     /// takes a block
     /// returns true if the block should be rotated by the given move
@@ -49,7 +49,7 @@ impl Block
     }
 
     /// does a 90° clockwise rotation along the right-left axis
-    pub fn rotate_right_left(&self) -> Block
+    pub fn rotate_right_left(&self) -> Block<ColorType>
     {
         // permutes the colors
         let right_left = self.color.right_left;
@@ -65,7 +65,7 @@ impl Block
     }
 
     /// does a 90° clockwise rotation along the top_down axis
-    pub fn rotate_top_down(&self) -> Block
+    pub fn rotate_top_down(&self) -> Block<ColorType>
     {
         // permutes the colors
         let right_left = self.color.front_back;
@@ -81,7 +81,7 @@ impl Block
     }
 
     /// does a 90° clockwise rotation along the front-back axis
-    pub fn rotate_front_back(&self) -> Block
+    pub fn rotate_front_back(&self) -> Block<ColorType>
     {
         // permutes the colors
         let right_left = self.color.top_down;
@@ -98,7 +98,7 @@ impl Block
 
     /// applies a single 90° clockwise rotation to a block
     /// along the appropriate axis, given the MoveKind
-    fn rotate(&self, kind: MoveKind) -> Block
+    fn rotate(&self, kind: MoveKind) -> Block<ColorType>
     {
         match kind
         {
@@ -109,7 +109,7 @@ impl Block
     }
 
     /// takes a move and produces a new, rotated, block by applying the move
-    fn apply_move(&self, m: Move) -> Block
+    fn apply_move(&self, m: Move) -> Block<ColorType>
     {
         let mut block = self.clone();
         if block.should_move(m)
@@ -129,10 +129,9 @@ impl Block
 /// a Rubik's cube is defined as 3D blocks that can be accessed and rotated
 /// this representation makes it particularly easy to implement moves and understand the 3D structure of the cube
 /// however, it is ineficient when one want to apply moves quickly and it waste memory
-
 pub struct Cube
 {
-    pub blocks: Vec<Block>
+    pub blocks: Vec<Block<Color>>
 }
 
 impl Cube
@@ -181,18 +180,20 @@ impl Cube
     }
 
     /// takes a move and produces a new, twisted, cube by applying the move
-    /// does NOT insures that the blocks of the output are sorted
-    pub fn apply_move_unsorted(&self, m: Move) -> Cube
+    pub fn apply_move(&self, m: Move) -> Cube
     {
         // applies the move to all blocks
-        let blocks = self.blocks.iter().map(|block| block.apply_move(m)).collect();
+        let mut blocks: Vec<Block<Color>> = self.blocks.iter().map(|block| block.apply_move(m)).collect();
+        // sorts the blocks by position to insure reproducibility
+        // this is especially important to make sure flatten always behave identically
+        // (one could move the sort into flatten but it would be inelegant and this function is not efficient anyway)
+        blocks.sort_unstable_by_key(|block| block.position);
         Cube { blocks }
     }
 
     /// takes a move and produces a new, twisted, cube by applying the move
     /// however, preserves orientation when applying a middle layer rotation
-    /// does NOT insures that the blocks of the output are sorted
-    pub fn apply_move_orientation_preserving_unsorted(&self, m: Move) -> Cube
+    pub fn apply_move_orientation_preserving(&self, m: Move) -> Cube
     {
         // rotates the parallel layers instead of the middle layer
         let (kind1, kind2) = match m.kind
@@ -204,7 +205,7 @@ impl Cube
             // the middle layer parallel to the Front and Back faces
             MoveKind::Side => (MoveKind::Front, MoveKind::Back),
             // any non middle layer, we can just apply as usual
-            _ => return self.apply_move_unsorted(m)
+            _ => return self.apply_move(m)
         };
         // converts clockwise motion into counterclockwise motion
         let amplitude = match m.amplitude
@@ -216,18 +217,7 @@ impl Cube
         // applies the two moves
         let move1 = Move { kind: kind1, amplitude };
         let move2 = Move { kind: kind2, amplitude };
-        self.apply_move_unsorted(move1).apply_move_unsorted(move2)
-    }
-
-    /// takes a move and produces a new, twisted, cube by applying the move
-    pub fn apply_move(&self, m: Move) -> Cube
-    {
-        let mut cube = self.apply_move_unsorted(m);
-        // sorts the blocks by position to insure reproducibility
-        // this is especially important to make sure flatten always behave identically
-        // (one could move the sort into flatten but it would be inelegant and this function is not efficient anyway)
-        cube.blocks.sort_unstable_by_key(|block| block.position);
-        cube
+        self.apply_move(move1).apply_move(move2)
     }
 
     /*/// takes a cube and produces a new cube with color switched such that the center of the first face is of the first color, etc
