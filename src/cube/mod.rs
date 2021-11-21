@@ -2,6 +2,7 @@ mod sizes;
 mod color;
 mod moves;
 mod flat;
+mod coordinates;
 use color::Color;
 use sizes::{NB_SQUARES_SIDE, NB_SQUARES_CUBE};
 use moves::{MoveKind, Amplitude, Move};
