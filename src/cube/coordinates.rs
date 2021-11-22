@@ -1,5 +1,8 @@
-use super::sizes::{NB_SQUARES_FACE, NB_SQUARES_SIDE};
-use super::moves::{MoveKind, Move};
+//! various coordinates representations
+//! each with their pros and cons
+use enum_iterator::IntoEnumIterator;
+use super::sizes::{NB_SQUARES_FACE, NB_SQUARES_SIDE, NB_FACES};
+use super::moves::{MoveKind, MoveDescription};
 
 //-----------------------------------------------------------------------------
 // 1D
@@ -7,7 +10,8 @@ use super::moves::{MoveKind, Move};
 /// coordinates into a 1D array
 /// this format leads to very efficient implementations
 /// but is impractical to manipulata as the mapping to the cube is non-trivial
-struct Coordinate1D
+#[derive(Clone, Copy)]
+pub struct Coordinate1D
 {
     /// 0 to NB_SQUARES_CUBE-1
     pub x: usize
@@ -22,7 +26,7 @@ impl Coordinate1D
     }
 
     /// converts to 2D coordinates
-    fn to_2D(&self) -> Coordinate2D
+    fn to_2D(self) -> Coordinate2D
     {
         let face = Face::from_usize(self.x / NB_SQUARES_FACE);
         let x = (self.x % NB_SQUARES_FACE) / NB_SQUARES_SIDE;
@@ -31,15 +35,24 @@ impl Coordinate1D
     }
 
     /// converts to 3D coordinates
-    fn to_3D(&self) -> Coordinate3D
+    fn to_3D(self) -> Coordinate3D
     {
         self.to_2D().to_3D()
     }
 
     /// takes a move and produces new, rotated, coordinates by applying the move
-    pub fn apply_move(&self, m: Move) -> Coordinate1D
+    pub fn apply_move(&self, m: &MoveDescription) -> Coordinate1D
     {
         self.to_3D().apply_move(m).to_1D()
+    }
+
+    /// returns the coordinates of the center of all the faces
+    pub fn center_coordinates() -> Vec<usize>
+    {
+        // use the 2D representation to get the coordinates of the first center
+        let first_center = Coordinate2D { face: Face::Left, x: 1, y: 1 }.to_1D().x;
+        // use the fact that each identical square is separated by NB_SQUARES_FACE squares in order to compute the subsequent positions
+        (0..NB_FACES).map(|face_index| first_center + face_index * NB_SQUARES_FACE).collect()
     }
 }
 
@@ -47,7 +60,7 @@ impl Coordinate1D
 // 2D + face
 
 /// all faces of a cube
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, IntoEnumIterator)]
 #[repr(usize)]
 enum Face
 {
@@ -72,9 +85,9 @@ impl Face
 /// coordinates into a 2D array with additional face coordinate
 /// it is easy to identify classical position (center and corners) in this format
 /// it is also easy to convert it to 3D and 1D
-struct Coordinate2D
+pub struct Coordinate2D
 {
-    /// in order [Left, Front, Right, Back, Top, Bottom]
+    /// in order [Left, Front, Right, Back, Up, Down]
     face: Face,
     /// 0 to NB_SQUARES_SIDE-1
     x: usize,
@@ -85,7 +98,7 @@ struct Coordinate2D
 impl Coordinate2D
 {
     /// converts into 1D coordinates
-    fn to_1D(&self) -> Coordinate1D
+    pub fn to_1D(&self) -> Coordinate1D
     {
         let x = (self.face as usize) * NB_SQUARES_FACE + self.x * NB_SQUARES_SIDE + self.y;
         Coordinate1D { x }
@@ -151,7 +164,8 @@ struct Coordinate3D
     /// front to back
     /// 0 to NB_SQUARES_SIDE-1
     front_back: usize,
-    /// one of three possibilities
+    /// along which axis is the face facing
+    /// RighLeft => Right or Left face
     axis: RotationAxis
 }
 
@@ -259,9 +273,9 @@ impl Coordinate3D
 
     /// returns true if the coordinates should be impacted by the given move
     /// as a function of the slice of the cube that is rotated by the move
-    fn should_move(&self, m: Move) -> bool
+    fn should_move(&self, kind: MoveKind) -> bool
     {
-        match m.kind
+        match kind
         {
             MoveKind::Front => self.front_back == 0,
             MoveKind::Side => self.front_back == 1,
@@ -276,10 +290,10 @@ impl Coordinate3D
     }
 
     /// takes a move and produces new, rotated, coordinates by applying the move
-    fn apply_move(&self, m: Move) -> Coordinate3D
+    fn apply_move(&self, m: &MoveDescription) -> Coordinate3D
     {
         let mut coordinates = self.clone();
-        if coordinates.should_move(m)
+        if coordinates.should_move(m.kind)
         {
             // axis along which the rotation will be done
             let axis = match m.kind

@@ -1,6 +1,9 @@
 //! Colors and color related operations
 use super::sizes::NB_FACES;
 
+//-----------------------------------------------------------------------------
+// Color
+
 /// one color per face of the cube
 pub const NB_COLORS: usize = NB_FACES;
 
@@ -20,7 +23,8 @@ pub enum Color
 
 impl Color
 {
-    /// list of all colors in their default order
+    /// list of all colors in [Left, Front, Right, Back, Up, Down] order
+    /// according to the western color scheme: https://www.speedsolving.com/wiki/index.php/Western_Color_Scheme
     pub const ALL: [Color; NB_COLORS] =
-        [Color::Red, Color::Blue, Color::Green, Color::Yellow, Color::White, Color::Orange];
+        [Color::Orange, Color::Green, Color::Red, Color::Blue, Color::White, Color::Yellow];
 }
