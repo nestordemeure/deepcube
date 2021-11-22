@@ -10,7 +10,7 @@ use super::coordinates::Coordinate1D;
 // Move description
 
 /// all the slice of the cube that could move
-#[derive(IntoEnumIterator, Copy, Clone)]
+#[derive(IntoEnumIterator, Copy, Clone, Debug)]
 pub enum MoveKind
 {
     /// the face facing the solver
@@ -34,7 +34,7 @@ pub enum MoveKind
 }
 
 /// all possible amplitudes for a move
-#[derive(IntoEnumIterator, Copy, Clone, PartialEq)]
+#[derive(IntoEnumIterator, Copy, Clone, PartialEq, Debug)]
 pub enum Amplitude
 {
     /// 90° turn clockwise
@@ -60,7 +60,7 @@ impl Amplitude
 }
 
 /// describes all possible moves
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct MoveDescription
 {
     pub kind: MoveKind,

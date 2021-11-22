@@ -3,9 +3,11 @@ pub mod sizes;
 mod color;
 mod moves;
 mod coordinates;
+mod display;
 pub use color::Color;
 pub use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE, NB_SQUARES_SIDE};
 pub use moves::Move;
+use coordinates::{Face, Coordinate2D};
 
 //-----------------------------------------------------------------------------
 // Cube
@@ -70,6 +72,13 @@ impl Cube
             }
         }
         true
+    }
+
+    /// gets the color at the given 2D coordinates
+    pub fn get(&self, face: Face, x: usize, y: usize) -> Color
+    {
+        let index = Coordinate2D { face, x, y }.to_1D().x;
+        self.squares[index]
     }
 
     /// turns the cube into an array of references to faces ordered according to the default color order
