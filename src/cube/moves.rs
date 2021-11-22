@@ -70,16 +70,36 @@ pub struct MoveDescription
 //-----------------------------------------------------------------------------
 // Move
 
-/// move compiled into a permutation table
-/// the compilation step is expensive but needs to be run only once
+/// a way to twist the cube
+/// note that this particular representation takes some memory,
+/// MoveDescription are more suited if one just want to recall a move
 pub struct Move
 {
+    /// unique identifier for the move
     pub description: MoveDescription,
+    /// a permutation table, precomputed to speed up move computation
     pub permutation: [usize; NB_SQUARES_CUBE]
 }
 
 impl Move
 {
+    /// takes a move description and compiles it down to a permutation table
+    /// NOTE: this step is too expensive to be run whenever a move needs to be applied, instead it is meant as a preparation step
+    fn new(kind: MoveKind, amplitude: Amplitude) -> Move
+    {
+        // builds the description of the move
+        let description = MoveDescription { kind, amplitude };
+        // generate the associated permutation table
+        let mut permutation: [usize; NB_SQUARES_CUBE] = [0; NB_SQUARES_CUBE];
+        for (index, result) in permutation.iter_mut().enumerate()
+        {
+            // new index obtained once we apply the move
+            let new_index = Coordinate1D::new(index).apply_move(&description).x;
+            *result = new_index;
+        }
+        Move { description, permutation }
+    }
+
     /// returns a vector containing all possible moves
     pub fn all_moves() -> Vec<Move>
     {
@@ -89,23 +109,6 @@ impl Move
                                                                  })
                                   })
                                   .collect()
-    }
-
-    /// takes a move description and compiles it down to a permutation table
-    /// NOTE: this step is too expensive to be run whenever a move needs to be applied, instead it is meant as a preparation step
-    fn new(kind: MoveKind, amplitude: Amplitude) -> Move
-    {
-        // builds the description of the move
-        let description = MoveDescription { kind, amplitude };
-        // generate the associated permutation table
-        let mut permutation: [usize; NB_SQUARES_CUBE] = [0; NB_SQUARES_CUBE];
-        for index in permutation.iter_mut()
-        {
-            // new index obtained once we apply the move
-            let new_index = Coordinate1D::new(*index).apply_move(&description).x;
-            *index = new_index;
-        }
-        Move { description, permutation }
     }
 
     /// returns the new coordinate obtained after applying the move
