@@ -40,19 +40,16 @@ impl Coordinate1D
         self.to_2D().to_3D()
     }
 
+    /// rotates along the given axis
+    pub fn rotate(&self, axis: RotationAxis) -> Coordinate1D
+    {
+        self.to_3D().rotate(axis).to_1D()
+    }
+
     /// takes a move and produces new, rotated, coordinates by applying the move
     pub fn apply_move(&self, m: &MoveDescription) -> Coordinate1D
     {
         self.to_3D().apply_move(m).to_1D()
-    }
-
-    /// returns the coordinates of the center of all the faces
-    pub fn center_coordinates() -> Vec<usize>
-    {
-        // use the 2D representation to get the coordinates of the first center
-        let first_center = Coordinate2D { face: Face::Left, x: 1, y: 1 }.to_1D().x;
-        // use the fact that each identical square is separated by NB_SQUARES_FACE squares in order to compute the subsequent positions
-        (0..NB_FACES).map(|face_index| first_center + face_index * NB_SQUARES_FACE).collect()
     }
 }
 
@@ -180,8 +177,8 @@ impl Coordinate2D
 // 3D + axis
 
 /// axis along which a rotation can be done
-#[derive(Clone, Copy)]
-enum RotationAxis
+#[derive(Clone, Copy, IntoEnumIterator, Debug)]
+pub enum RotationAxis
 {
     LeftRight,
     DownUp,

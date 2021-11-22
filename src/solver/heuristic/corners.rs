@@ -42,7 +42,7 @@ impl CornersHeuristic
                 {
                     // applies the move to the cube to get a new cube and its hash
                     let new_cube = cube.apply_move(m);
-                    let (corners, _middles) = cube.get_corners_middles();
+                    let (corners, _middles) = new_cube.get_corners_middles();
                     // if the cube is truly new, saves the distance and adds it to the cube to further process
                     if let Entry::Vacant(entry) = table.entry(corners)
                     {
@@ -67,3 +67,7 @@ impl CornersHeuristic
         CornersHeuristic { table }
     }
 }
+
+// TODO:
+// run the search in parallel at the cubes.iter() level
+// improve the hash function used to speed up computations

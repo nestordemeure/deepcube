@@ -7,7 +7,7 @@ mod coordinates;
 pub use color::Color;
 pub use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE, NB_SQUARES_SIDE};
 pub use moves::Move;
-use coordinates::{Face, Coordinate2D};
+pub use coordinates::{Face, Coordinate1D, Coordinate2D, RotationAxis};
 
 //-----------------------------------------------------------------------------
 // Cube
@@ -46,6 +46,20 @@ impl Cube
         for (index, color) in self.squares.iter().cloned().enumerate()
         {
             squares[m.apply(index)] = color;
+        }
+        // insures that we have covered all colors
+        debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
+        Cube { squares }
+    }
+
+    /// rotates the cube along the given axis
+    pub fn rotate(&self, axis: RotationAxis) -> Cube
+    {
+        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
+        for (index, color) in self.squares.iter().cloned().enumerate()
+        {
+            let new_index = Coordinate1D::new(index).rotate(axis).x;
+            squares[new_index] = color;
         }
         // insures that we have covered all colors
         debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
