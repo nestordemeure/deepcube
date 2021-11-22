@@ -18,17 +18,16 @@ NA
 
 ## TODO
 
-- color normalization
-- scrambling
+- let the table be generated in parallel
+- let the table be loaded and saved via serde
+
 - dijskra (tested on small scramble)
 - heuristics
 - A*
 - IDA*
 
-- some tests to check whether both representation are truly equivalent?
 - some tests to check that all algorithm find optimal solutions with the same number of moves?
 
-- implement scrambler
 - implement vizualization (could be a simple shell based one)
 - implement heuristics for solvers
     - cross
@@ -45,7 +44,3 @@ NA
     - collect data
     - train network
     - use it as an heuristic
-
-## Notes:
-
-The code requires nightly to check if vectors are sorted in debug mode.

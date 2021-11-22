@@ -8,7 +8,7 @@ use super::sizes::NB_FACES;
 pub const NB_COLORS: usize = NB_FACES;
 
 /// color of the faces of the cube
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Color
 {
     Red = 0,

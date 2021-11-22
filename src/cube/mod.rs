@@ -1,17 +1,17 @@
-mod sizes;
+use rand::seq::SliceRandom;
+pub mod sizes;
 mod color;
 mod moves;
 mod coordinates;
-use color::Color;
-use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE};
-use moves::Move;
-
-use self::sizes::NB_SQUARES_SIDE;
+pub use color::Color;
+pub use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE, NB_SQUARES_SIDE};
+pub use moves::Move;
 
 //-----------------------------------------------------------------------------
 // Cube
 
 /// A Rubik's cube stored as a flat array of colors
+#[derive(Clone)]
 pub struct Cube
 {
     pub squares: [Color; NB_SQUARES_CUBE]
@@ -97,7 +97,7 @@ impl Cube
     /// the second one is the colors of the 4 middles of all the faces
     /// both are extracted after putting the cube in a normalized orientation
     /// this information is used by some heuristics
-    fn get_corners_middles(&self) -> ([Color; NB_FACES * 4], [Color; NB_FACES * 4])
+    pub fn get_corners_middles(&self) -> ([Color; NB_FACES * 4], [Color; NB_FACES * 4])
     {
         let mut result_corners = [Color::Invalid; NB_FACES * 4];
         let mut result_middles = [Color::Invalid; NB_FACES * 4];
@@ -124,5 +124,19 @@ impl Cube
             result_middles_face[3] = face[7];
         }
         (result_corners, result_middles)
+    }
+
+    /// scrambles the cube a given number of times to produce a new, random, cube
+    fn scramble(&self, nb_scramble: usize) -> Cube
+    {
+        let mut rng = rand::thread_rng();
+        let mut result = self.clone();
+        let moves = Move::all_moves();
+        for _i in 0..nb_scramble
+        {
+            let random_move = moves.choose(&mut rng).unwrap();
+            result = result.apply_move(random_move);
+        }
+        result
     }
 }
