@@ -167,13 +167,12 @@ impl Cube
             print!("{}", colored_text);
         };
         // displays top squares
-        let face = Face::Up;
         for y in (0..NB_SQUARES_SIDE).rev()
         {
             print!("      "); // empty line
             for x in 0..NB_SQUARES_SIDE
             {
-                display_square(face, x, y);
+                display_square(Face::Up, x, y);
             }
             println!();
         }
@@ -190,13 +189,12 @@ impl Cube
             println!();
         }
         // displays bottom squares
-        let face = Face::Down;
         for y in (0..NB_SQUARES_SIDE).rev()
         {
             print!("      "); // empty line
             for x in 0..NB_SQUARES_SIDE
             {
-                display_square(face, x, y);
+                display_square(Face::Down, x, y);
             }
             println!();
         }

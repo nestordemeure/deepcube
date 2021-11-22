@@ -124,53 +124,53 @@ impl Coordinate2D
     {
         match self.face
         {
-            Face::Right =>
-            {
-                let axis = RotationAxis::RightLeft;
-                let right_left = 0;
-                let front_back = (NB_SQUARES_SIDE - 1) - self.x;
-                let down_up = self.y;
-                Coordinate3D { right_left, down_up, front_back, axis }
-            }
             Face::Left =>
             {
-                let axis = RotationAxis::RightLeft;
-                let right_left = 2;
+                let axis = RotationAxis::LeftRight;
+                let left_right = 0;
+                let front_back = (NB_SQUARES_SIDE - 1) - self.x;
+                let down_up = self.y;
+                Coordinate3D { left_right, down_up, front_back, axis }
+            }
+            Face::Right =>
+            {
+                let axis = RotationAxis::LeftRight;
+                let left_right = 2;
                 let front_back = self.x;
                 let down_up = self.y;
-                Coordinate3D { right_left, down_up, front_back, axis }
+                Coordinate3D { left_right, down_up, front_back, axis }
             }
             Face::Front =>
             {
                 let axis = RotationAxis::FrontBack;
                 let front_back = 0;
-                let right_left = self.x;
+                let left_right = self.x;
                 let down_up = self.y;
-                Coordinate3D { right_left, down_up, front_back, axis }
+                Coordinate3D { left_right, down_up, front_back, axis }
             }
             Face::Back =>
             {
                 let axis = RotationAxis::FrontBack;
                 let front_back = 2;
-                let right_left = (NB_SQUARES_SIDE - 1) - self.x;
+                let left_right = (NB_SQUARES_SIDE - 1) - self.x;
                 let down_up = self.y;
-                Coordinate3D { right_left, down_up, front_back, axis }
+                Coordinate3D { left_right, down_up, front_back, axis }
             }
             Face::Down =>
             {
                 let axis = RotationAxis::DownUp;
                 let down_up = 0;
-                let right_left = self.x;
-                let front_back = self.y;
-                Coordinate3D { right_left, down_up, front_back, axis }
+                let left_right = self.x;
+                let front_back = (NB_SQUARES_SIDE - 1) - self.y;
+                Coordinate3D { left_right, down_up, front_back, axis }
             }
             Face::Up =>
             {
                 let axis = RotationAxis::DownUp;
                 let down_up = 2;
-                let right_left = self.x;
-                let front_back = (NB_SQUARES_SIDE - 1) - self.y;
-                Coordinate3D { right_left, down_up, front_back, axis }
+                let left_right = self.x;
+                let front_back = self.y;
+                Coordinate3D { left_right, down_up, front_back, axis }
             }
         }
     }
@@ -183,7 +183,7 @@ impl Coordinate2D
 #[derive(Clone, Copy)]
 enum RotationAxis
 {
-    RightLeft,
+    LeftRight,
     DownUp,
     FrontBack
 }
@@ -196,7 +196,7 @@ struct Coordinate3D
 {
     /// right to left
     /// 0 to NB_SQUARES_SIDE-1
-    right_left: usize,
+    left_right: usize,
     /// bottom to top
     /// 0 to NB_SQUARES_SIDE-1
     down_up: usize,
@@ -221,16 +221,16 @@ impl Coordinate3D
     {
         match self.axis
         {
-            RotationAxis::RightLeft if self.right_left == 0 =>
+            RotationAxis::LeftRight if self.left_right == 0 =>
             {
-                let face = Face::Right;
+                let face = Face::Left;
                 let x = (NB_SQUARES_SIDE - 1) - self.front_back;
                 let y = self.down_up;
                 Coordinate2D { face, x, y }
             }
-            RotationAxis::RightLeft if self.right_left == 2 =>
+            RotationAxis::LeftRight if self.left_right == 2 =>
             {
-                let face = Face::Left;
+                let face = Face::Right;
                 let x = self.front_back;
                 let y = self.down_up;
                 Coordinate2D { face, x, y }
@@ -238,29 +238,29 @@ impl Coordinate3D
             RotationAxis::FrontBack if self.front_back == 0 =>
             {
                 let face = Face::Front;
-                let x = self.right_left;
+                let x = self.left_right;
                 let y = self.down_up;
                 Coordinate2D { face, x, y }
             }
             RotationAxis::FrontBack if self.front_back == 2 =>
             {
                 let face = Face::Back;
-                let x = (NB_SQUARES_SIDE - 1) - self.right_left;
+                let x = (NB_SQUARES_SIDE - 1) - self.left_right;
                 let y = self.down_up;
                 Coordinate2D { face, x, y }
             }
             RotationAxis::DownUp if self.down_up == 0 =>
             {
                 let face = Face::Down;
-                let x = self.right_left;
-                let y = self.front_back;
+                let x = self.left_right;
+                let y = (NB_SQUARES_SIDE - 1) - self.front_back;
                 Coordinate2D { face, x, y }
             }
             RotationAxis::DownUp if self.down_up == 2 =>
             {
                 let face = Face::Up;
-                let x = self.right_left;
-                let y = (NB_SQUARES_SIDE - 1) - self.front_back;
+                let x = self.left_right;
+                let y = self.front_back;
                 Coordinate2D { face, x, y }
             }
             _ =>
@@ -270,21 +270,21 @@ impl Coordinate3D
         }
     }
 
-    /// does a 90° clockwise rotation along the RightLeft axis
-    fn rotate_right_left(&self) -> Coordinate3D
+    /// does a 90° clockwise rotation along the LeftRight axis
+    fn rotate_left_right(&self) -> Coordinate3D
     {
         // change the axis
         let axis = match self.axis
         {
-            RotationAxis::RightLeft => RotationAxis::RightLeft,
+            RotationAxis::LeftRight => RotationAxis::LeftRight,
             RotationAxis::DownUp => RotationAxis::FrontBack,
             RotationAxis::FrontBack => RotationAxis::DownUp
         };
         // rotates the coordinates
-        let right_left = self.right_left;
+        let left_right = self.left_right;
         let down_up = (NB_SQUARES_SIDE - 1) - self.front_back;
         let front_back = self.down_up;
-        Coordinate3D { right_left, down_up, front_back, axis }
+        Coordinate3D { left_right, down_up, front_back, axis }
     }
 
     /// does a 90° clockwise rotation along the DownUp axis
@@ -293,15 +293,15 @@ impl Coordinate3D
         // change the axis
         let axis = match self.axis
         {
-            RotationAxis::RightLeft => RotationAxis::FrontBack,
+            RotationAxis::LeftRight => RotationAxis::FrontBack,
             RotationAxis::DownUp => RotationAxis::DownUp,
-            RotationAxis::FrontBack => RotationAxis::RightLeft
+            RotationAxis::FrontBack => RotationAxis::LeftRight
         };
         // rotates the coordinates
-        let right_left = self.front_back;
+        let left_right = (NB_SQUARES_SIDE - 1) - self.front_back;
         let down_up = self.down_up;
-        let front_back = (NB_SQUARES_SIDE - 1) - self.right_left;
-        Coordinate3D { right_left, down_up, front_back, axis }
+        let front_back = self.left_right;
+        Coordinate3D { left_right, down_up, front_back, axis }
     }
 
     /// does a 90° clockwise rotation along the FrontBack axis
@@ -310,15 +310,15 @@ impl Coordinate3D
         // change the axis
         let axis = match self.axis
         {
-            RotationAxis::RightLeft => RotationAxis::DownUp,
-            RotationAxis::DownUp => RotationAxis::RightLeft,
+            RotationAxis::LeftRight => RotationAxis::DownUp,
+            RotationAxis::DownUp => RotationAxis::LeftRight,
             RotationAxis::FrontBack => RotationAxis::FrontBack
         };
         // rotates the coordinates
-        let right_left = self.down_up;
-        let down_up = (NB_SQUARES_SIDE - 1) - self.right_left;
+        let left_right = (NB_SQUARES_SIDE - 1) - self.down_up;
+        let down_up = self.left_right;
         let front_back = self.front_back;
-        Coordinate3D { right_left, down_up, front_back, axis }
+        Coordinate3D { left_right, down_up, front_back, axis }
     }
 
     /// does a 90° clockwise rotation along the given axis
@@ -326,7 +326,7 @@ impl Coordinate3D
     {
         match axis
         {
-            RotationAxis::RightLeft => self.rotate_right_left(),
+            RotationAxis::LeftRight => self.rotate_left_right(),
             RotationAxis::DownUp => self.rotate_down_up(),
             RotationAxis::FrontBack => self.rotate_front_back()
         }
@@ -341,9 +341,9 @@ impl Coordinate3D
             MoveKind::Front => self.front_back == 0,
             MoveKind::Side => self.front_back == 1,
             MoveKind::Back => self.front_back == 2,
-            MoveKind::Right => self.right_left == 0,
-            MoveKind::Middle => self.right_left == 1,
-            MoveKind::Left => self.right_left == 2,
+            MoveKind::Left => self.left_right == 0,
+            MoveKind::Middle => self.left_right == 1,
+            MoveKind::Right => self.left_right == 2,
             MoveKind::Down => self.down_up == 0,
             MoveKind::Equator => self.down_up == 1,
             MoveKind::Up => self.down_up == 2
@@ -360,7 +360,7 @@ impl Coordinate3D
             let axis = match m.kind
             {
                 MoveKind::Front | MoveKind::Side | MoveKind::Back => RotationAxis::FrontBack,
-                MoveKind::Right | MoveKind::Middle | MoveKind::Left => RotationAxis::RightLeft,
+                MoveKind::Right | MoveKind::Middle | MoveKind::Left => RotationAxis::LeftRight,
                 MoveKind::Down | MoveKind::Equator | MoveKind::Up => RotationAxis::DownUp
             };
             // does 90° clockwise rotations until the desired amplitude is reached
