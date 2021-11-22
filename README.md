@@ -28,7 +28,6 @@ NA
 
 - some tests to check that all algorithm find optimal solutions with the same number of moves?
 
-- implement vizualization (could be a simple shell based one)
 - implement heuristics for solvers
     - cross
     - corners

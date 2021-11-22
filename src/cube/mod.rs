@@ -1,9 +1,9 @@
 use rand::seq::SliceRandom;
+use ansi_term::{Style, Colour::Black};
 pub mod sizes;
 mod color;
 mod moves;
 mod coordinates;
-mod display;
 pub use color::Color;
 pub use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE, NB_SQUARES_SIDE};
 pub use moves::Move;
@@ -147,5 +147,58 @@ impl Cube
             result = result.apply_move(random_move);
         }
         result
+    }
+
+    /// displays the cube in the shell
+    pub fn display(&self)
+    {
+        // displays the square at a given 2D coordinate
+        let display_square = |face: Face, x: usize, y: usize| {
+            let color = self.get(face, x, y).to_shell_color();
+            let text = if (x == 1) && (y == 1)
+            {
+                format!("{} ", face.to_single_letter_string())
+            }
+            else
+            {
+                "  ".to_string()
+            };
+            let colored_text = Style::new().on(color).fg(Black).bold().paint(text);
+            print!("{}", colored_text);
+        };
+        // displays top squares
+        let face = Face::Up;
+        for y in (0..NB_SQUARES_SIDE).rev()
+        {
+            print!("      "); // empty line
+            for x in 0..NB_SQUARES_SIDE
+            {
+                display_square(face, x, y);
+            }
+            println!();
+        }
+        // displays middle squares
+        for y in (0..NB_SQUARES_SIDE).rev()
+        {
+            for face in [Face::Left, Face::Front, Face::Right, Face::Back]
+            {
+                for x in 0..NB_SQUARES_SIDE
+                {
+                    display_square(face, x, y);
+                }
+            }
+            println!();
+        }
+        // displays bottom squares
+        let face = Face::Down;
+        for y in (0..NB_SQUARES_SIDE).rev()
+        {
+            print!("      "); // empty line
+            for x in 0..NB_SQUARES_SIDE
+            {
+                display_square(face, x, y);
+            }
+            println!();
+        }
     }
 }
