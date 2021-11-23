@@ -18,10 +18,7 @@ NA
 
 ## TODO
 
-- put display info in a separate file
 - implement solving of table for heuristic
-
-- let the table be generated in parallel
 - let the table be loaded and saved via serde
 
 - dijskra (tested on small scramble)

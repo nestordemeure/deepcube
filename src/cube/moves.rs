@@ -3,8 +3,10 @@
 //! See this website for the classical notations:
 //! http://www.rubiksplace.com/move-notations/
 use enum_iterator::IntoEnumIterator;
+use super::Cube;
 use super::sizes::NB_SQUARES_CUBE;
-use super::coordinates::Coordinate1D;
+use super::coordinates::{Coordinate1D, RotationAxis};
+use super::color::Color;
 
 //-----------------------------------------------------------------------------
 // Move description
@@ -124,5 +126,38 @@ impl Move
     {
         // applies the permutation
         self.permutation[coordinate1D]
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Cube
+
+impl Cube
+{
+    /// takes a move and produces a new, twisted, cube by applying the move
+    pub fn apply_move(&self, m: &Move) -> Cube
+    {
+        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
+        for (index, color) in self.squares.iter().cloned().enumerate()
+        {
+            squares[m.apply(index)] = color;
+        }
+        // insures that we have covered all colors
+        debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
+        Cube { squares }
+    }
+
+    /// rotates the cube along the given axis
+    pub fn rotate(&self, axis: RotationAxis) -> Cube
+    {
+        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
+        for (index, color) in self.squares.iter().cloned().enumerate()
+        {
+            let new_index = Coordinate1D::new(index).rotate(axis).x;
+            squares[new_index] = color;
+        }
+        // insures that we have covered all colors
+        debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
+        Cube { squares }
     }
 }

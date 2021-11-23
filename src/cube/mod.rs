@@ -1,12 +1,11 @@
 use std::collections::HashSet;
-
 use enum_iterator::IntoEnumIterator;
 use rand::seq::SliceRandom;
-use ansi_term::{Style, Colour::Black};
 pub mod sizes;
 mod color;
 mod moves;
 mod coordinates;
+mod display;
 pub use color::Color;
 pub use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE, NB_SQUARES_SIDE};
 pub use moves::Move;
@@ -69,33 +68,6 @@ impl Cube
         }
 
         result.into_iter().collect()
-    }
-
-    /// takes a move and produces a new, twisted, cube by applying the move
-    pub fn apply_move(&self, m: &Move) -> Cube
-    {
-        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
-        for (index, color) in self.squares.iter().cloned().enumerate()
-        {
-            squares[m.apply(index)] = color;
-        }
-        // insures that we have covered all colors
-        debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
-        Cube { squares }
-    }
-
-    /// rotates the cube along the given axis
-    pub fn rotate(&self, axis: RotationAxis) -> Cube
-    {
-        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
-        for (index, color) in self.squares.iter().cloned().enumerate()
-        {
-            let new_index = Coordinate1D::new(index).rotate(axis).x;
-            squares[new_index] = color;
-        }
-        // insures that we have covered all colors
-        debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
-        Cube { squares }
     }
 
     /// returns true if a rubik's cube is solved
@@ -190,56 +162,5 @@ impl Cube
             result = result.apply_move(random_move);
         }
         result
-    }
-
-    /// displays the cube in the shell
-    pub fn display(&self)
-    {
-        // displays the square at a given 2D coordinate
-        let display_square = |face: Face, x: usize, y: usize| {
-            let color = self.get(face, x, y).to_shell_color();
-            let text = if (x == 1) && (y == 1)
-            {
-                format!("{} ", face.to_single_letter_string())
-            }
-            else
-            {
-                "  ".to_string()
-            };
-            let colored_text = Style::new().on(color).fg(Black).bold().paint(text);
-            print!("{}", colored_text);
-        };
-        // displays top squares
-        for y in (0..NB_SQUARES_SIDE).rev()
-        {
-            print!("      "); // empty line
-            for x in 0..NB_SQUARES_SIDE
-            {
-                display_square(Face::Up, x, y);
-            }
-            println!();
-        }
-        // displays middle squares
-        for y in (0..NB_SQUARES_SIDE).rev()
-        {
-            for face in [Face::Left, Face::Front, Face::Right, Face::Back]
-            {
-                for x in 0..NB_SQUARES_SIDE
-                {
-                    display_square(face, x, y);
-                }
-            }
-            println!();
-        }
-        // displays bottom squares
-        for y in (0..NB_SQUARES_SIDE).rev()
-        {
-            print!("      "); // empty line
-            for x in 0..NB_SQUARES_SIDE
-            {
-                display_square(Face::Down, x, y);
-            }
-            println!();
-        }
     }
 }

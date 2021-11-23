@@ -1,11 +1,13 @@
 //! implementation of tables that maps from array of Colors to unsigne dintegers
-use ux::u4;
+use std::borrow::Borrow;
+
 use crate::cube::{Color, NB_FACES};
 
 //-----------------------------------------------------------------------------
 // Type of tree
 
 /// all types of tree
+#[derive(Clone)]
 enum TreeType<T>
 {
     Empty,
@@ -36,7 +38,8 @@ impl<T> TreeType<T>
 /// NOTE: there are several ways to improve teh datastructure
 /// - increasing the arity of the nodes, consumming several colors at once
 /// - storing raw leftover paths (once a value is alone in its subtree) instead of single color nodes
-struct RadixTree<T>
+#[derive(Clone)]
+pub struct RadixTree<T>
 {
     tree: TreeType<T>
 }
@@ -139,19 +142,22 @@ impl<T> RadixTree<T>
     /// applies a function to all keys, in order
     /// all key passed to f will be slices of color of length `key_length`
     /// if the tree contains longer keys, it will result in a crash
+    ///
+    /// consumes the tree as we process it in order to free some memory
+    ///
     /// NOTE: parallel version of this function could be build with a master-slaves architecture
-    /// where a single thread is going throug the tree and feeding the keys it builds to the slaves
-    pub fn for_each_key<F: FnMut(&[Color])>(&self, f: &mut F, key_length: usize)
+    ///       where a single thread is going throug the tree and feeding the keys it builds to the slaves
+    pub fn for_each_key<F: FnMut(&[Color])>(self, key_length: usize, mut f: F)
     {
         let mut key: Vec<Color> = (0..key_length).map(|_| Color::Invalid).collect();
         let depth = 0;
-        self.for_each_key_rec(f, &mut key, depth);
+        self.for_each_key_rec(&mut f, &mut key, depth);
     }
 
     /// used recurcively to implement `for_each_key`
-    fn for_each_key_rec<F: FnMut(&[Color])>(&self, f: &mut F, key: &mut [Color], depth: usize)
+    fn for_each_key_rec<F: FnMut(&[Color])>(self, f: &mut F, key: &mut [Color], depth: usize)
     {
-        match &self.tree
+        match self.tree
         {
             TreeType::Empty =>
             {
@@ -165,7 +171,7 @@ impl<T> RadixTree<T>
             TreeType::Node { children } =>
             {
                 // a node, go into each child one after the other
-                for (index_child, child) in children.iter().enumerate()
+                for (index_child, child) in children.into_vec().into_iter().enumerate()
                 {
                     // sets the color in the key
                     let color = Color::ALL[index_child];
@@ -224,36 +230,15 @@ impl<T: Copy + PartialEq> RadixTree<T>
 //-----------------------------------------------------------------------------
 // Table
 
-/// goes from an array of color to an integer between 0 and 15 included
+/// goes from an array of color to an integer
 /// NOTE: the optimal solution would be to have a way to index all (and only) legal positions into an array
-type Table = RadixTree<u4>;
-
-impl Table
-{
-    /// inserts a new key and value in the set
-    /// returns true if the insertion suceeded
-    /// and false if there was already an element with that key
-    pub fn insert_usize(&mut self, key: &[Color], value: usize) -> bool
-    {
-        let value = u4::new(value as u8);
-        self.insert(key, value)
-    }
-
-    /// get the value at the given key if it is present in the tree
-    /// panics or returns another value if it isn't
-    pub fn get_usize(&self, key: &[Color]) -> usize
-    {
-        let value_u4 = *self.get_unchecked(key);
-        let value_u8: u8 = value_u4.into();
-        value_u8 as usize
-    }
-}
+pub type Table = RadixTree<u8>;
 
 //-----------------------------------------------------------------------------
 // Set
 
 /// used to store a set of cubes
-type CubeSet = RadixTree<()>;
+pub type CubeSet = RadixTree<()>;
 
 impl CubeSet
 {

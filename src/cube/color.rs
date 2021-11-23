@@ -1,6 +1,5 @@
 //! Colors and color related operations
 use super::sizes::NB_FACES;
-use ansi_term::Colour;
 
 //-----------------------------------------------------------------------------
 // Color
@@ -28,19 +27,4 @@ impl Color
     /// according to the western color scheme: https://www.speedsolving.com/wiki/index.php/Western_Color_Scheme
     pub const ALL: [Color; NB_COLORS] =
         [Color::Orange, Color::Green, Color::Red, Color::Blue, Color::White, Color::Yellow];
-
-    /// converts the color to a shell color for display
-    pub fn to_shell_color(&self) -> Colour
-    {
-        match self
-        {
-            Color::Orange => Colour::RGB(255, 127, 80),
-            Color::Green => Colour::Green,
-            Color::Red => Colour::Red,
-            Color::Blue => Colour::Blue,
-            Color::White => Colour::White,
-            Color::Yellow => Colour::Yellow,
-            Color::Invalid => panic!("The Invalid color cannot be converted into a shell-displayeable color.")
-        }
-    }
 }

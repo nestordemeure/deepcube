@@ -1,7 +1,7 @@
 //! various coordinates representations
 //! each with their pros and cons
 use enum_iterator::IntoEnumIterator;
-use super::sizes::{NB_SQUARES_FACE, NB_SQUARES_SIDE, NB_FACES};
+use super::sizes::{NB_SQUARES_FACE, NB_SQUARES_SIDE};
 use super::moves::{MoveKind, MoveDescription};
 
 //-----------------------------------------------------------------------------
@@ -76,21 +76,6 @@ impl Face
     {
         debug_assert!(n < 6);
         unsafe { ::std::mem::transmute(n) }
-    }
-
-    /// turns a face into a single letter for display purposes
-    pub fn to_single_letter_string(&self) -> String
-    {
-        let letter = match self
-        {
-            Face::Left => "L",
-            Face::Front => "F",
-            Face::Right => "R",
-            Face::Back => "B",
-            Face::Up => "U",
-            Face::Down => "D"
-        };
-        letter.to_string()
     }
 }
 
