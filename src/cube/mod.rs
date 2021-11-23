@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+
+use enum_iterator::IntoEnumIterator;
 use rand::seq::SliceRandom;
 use ansi_term::{Style, Colour::Black};
 pub mod sizes;
@@ -13,7 +16,7 @@ pub use coordinates::{Face, Coordinate1D, Coordinate2D, RotationAxis};
 // Cube
 
 /// A Rubik's cube stored as a flat array of colors
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Cube
 {
     pub squares: [Color; NB_SQUARES_CUBE]
@@ -37,6 +40,35 @@ impl Cube
             shift += NB_SQUARES_FACE;
         }
         Cube { squares }
+    }
+
+    /// returns a vector of all possible solved cube
+    /// done by rotating a solved cube until all possibilities are reached
+    pub fn all_solved_cubes() -> Vec<Cube>
+    {
+        let mut cubes = vec![Cube::solved()];
+        let mut result = HashSet::new();
+
+        while !cubes.is_empty()
+        {
+            let mut new_cubes = Vec::new();
+            for cube in cubes
+            {
+                for axis in RotationAxis::into_enum_iter()
+                {
+                    // NOTE: there is probably a way to remove the clone but no need to bother for so few iterations
+                    let new_cube = cube.rotate(axis);
+                    let is_new = result.insert(new_cube.clone());
+                    if is_new
+                    {
+                        new_cubes.push(new_cube);
+                    }
+                }
+            }
+            cubes = new_cubes;
+        }
+
+        result.into_iter().collect()
     }
 
     /// takes a move and produces a new, twisted, cube by applying the move
@@ -118,7 +150,6 @@ impl Cube
     /// returns a pair of array
     /// the first one is the colors of the 4 corners of all the faces
     /// the second one is the colors of the 4 middles of all the faces
-    /// both are extracted after putting the cube in a normalized orientation
     /// this information is used by some heuristics
     pub fn get_corners_middles(&self) -> ([Color; NB_FACES * 4], [Color; NB_FACES * 4])
     {
@@ -130,11 +161,9 @@ impl Cube
             let start_index = index_face * NB_SQUARES_FACE;
             let end_index = start_index + NB_SQUARES_FACE;
             let face = &self.squares[start_index..end_index];
-            // gets the color of the center of the face, its identifier
-            let center_color_index = face[4] as usize;
-            // gets the results corresponding to this identifier
-            let result_corners_face = &mut result_corners[center_color_index * 4..];
-            let result_middles_face = &mut result_middles[center_color_index * 4..];
+            // gets the results corresponding to the face
+            let result_corners_face = &mut result_corners[index_face * 4..];
+            let result_middles_face = &mut result_middles[index_face * 4..];
             // stores the four corners
             result_corners_face[0] = face[0];
             result_corners_face[1] = face[2];

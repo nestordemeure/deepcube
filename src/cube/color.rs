@@ -9,15 +9,15 @@ use ansi_term::Colour;
 pub const NB_COLORS: usize = NB_FACES;
 
 /// color of the faces of the cube
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Color
 {
-    Red = 0,
-    Blue = 1,
-    Green = 2,
-    Yellow = 3,
+    Orange = 0,
+    Green = 1,
+    Red = 2,
+    Blue = 3,
     White = 4,
-    Orange = 5,
+    Yellow = 5,
     /// if this color comes up, you know there is a bug
     Invalid
 }

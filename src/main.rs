@@ -1,6 +1,4 @@
 #![feature(is_sorted)]
-
-use enum_iterator::IntoEnumIterator;
 #[allow(dead_code)]
 mod cube;
 mod solver;
@@ -19,6 +17,13 @@ fn main()
         cube.rotate(axis).display();
     }*/
 
+    // display all solved cubes
+    /*for (i, cube) in cube::Cube::all_solved_cubes().iter().enumerate()
+    {
+        println!("solved cube {}:", i);
+        cube.display();
+    }*/
+
     // generate all moves and displays them
     /*let moves = cube::Move::all_moves();
     for m in moves
@@ -28,5 +33,5 @@ fn main()
     }*/
 
     // generate the corner heuristic
-    //let corner_heuristic = solver::heuristic::CornersHeuristic::new();
+    let corner_heuristic = solver::heuristic::CornersHeuristic::new();
 }

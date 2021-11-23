@@ -33,6 +33,14 @@ pub enum MoveKind
     Side
 }
 
+impl MoveKind
+{
+    pub fn is_center_layer(&self) -> bool
+    {
+        matches!(self, MoveKind::Equator | MoveKind::Middle | MoveKind::Side)
+    }
+}
+
 /// all possible amplitudes for a move
 #[derive(IntoEnumIterator, Copy, Clone, PartialEq, Debug)]
 pub enum Amplitude

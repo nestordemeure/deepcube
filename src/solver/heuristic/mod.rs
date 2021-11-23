@@ -6,5 +6,5 @@ pub use corners::CornersHeuristic;
 pub trait Heuristic
 {
     /// returns a lower bound on the number of steps before the problem will be solved
-    fn optimistic_distance_to_solved(&self, cube: &Cube) -> usize;
+    fn optimistic_distance_to_solved(&self, cube: &Cube) -> u8;
 }
