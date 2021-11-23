@@ -221,7 +221,41 @@ impl<T: Copy + PartialEq> RadixTree<T>
     }
 }
 
-impl RadixTree<()>
+//-----------------------------------------------------------------------------
+// Table
+
+/// goes from an array of color to an integer between 0 and 15 included
+/// NOTE: the optimal solution would be to have a way to index all (and only) legal positions into an array
+type Table = RadixTree<u4>;
+
+impl Table
+{
+    /// inserts a new key and value in the set
+    /// returns true if the insertion suceeded
+    /// and false if there was already an element with that key
+    pub fn insert_usize(&mut self, key: &[Color], value: usize) -> bool
+    {
+        let value = u4::new(value as u8);
+        self.insert(key, value)
+    }
+
+    /// get the value at the given key if it is present in the tree
+    /// panics or returns another value if it isn't
+    pub fn get_usize(&self, key: &[Color]) -> usize
+    {
+        let value_u4 = *self.get_unchecked(key);
+        let value_u8: u8 = value_u4.into();
+        value_u8 as usize
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Set
+
+/// used to store a set of cubes
+type CubeSet = RadixTree<()>;
+
+impl CubeSet
 {
     /// inserts a new key in the set
     /// returns true if the insertion suceeded
@@ -231,13 +265,3 @@ impl RadixTree<()>
         self.insert(key, ())
     }
 }
-
-//-----------------------------------------------------------------------------
-// type definitions
-
-/// goes from an array of color to an integer between 0 and 15 included
-/// NOTE: the optimal solution would be to have a way to index all (and only) legal positions into an array
-type Table = RadixTree<u4>;
-
-/// used to store a set of cubes
-type CubeSet = RadixTree<()>;
