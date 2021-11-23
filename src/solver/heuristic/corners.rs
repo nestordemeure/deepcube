@@ -95,6 +95,8 @@ impl CornersHeuristic
 
         // display final informations on the table
         println!("Done! (maximum distance:{} table size:{})", distance_to_solved - 1, table_size);
+        // compresses the table and returns it
+        table.compress();
         CornersHeuristic { table }
     }
 }

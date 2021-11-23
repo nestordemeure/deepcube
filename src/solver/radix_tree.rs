@@ -1,6 +1,4 @@
-//! implementation of tables that maps from array of Colors to unsigne dintegers
-use std::borrow::Borrow;
-
+//! implementation of tables that maps from array of Colors to unsigned integers
 use crate::cube::{Color, NB_FACES};
 
 //-----------------------------------------------------------------------------
@@ -8,11 +6,12 @@ use crate::cube::{Color, NB_FACES};
 
 /// all types of tree
 #[derive(Clone)]
-enum TreeType<T>
+enum TreeType<T: Copy>
 {
     Empty,
     Leaf
     {
+        leftover_key: Box<[Color]>,
         value: T
     },
     Node
@@ -21,7 +20,7 @@ enum TreeType<T>
     }
 }
 
-impl<T> TreeType<T>
+impl<T: Copy> TreeType<T>
 {
     /// creates a new nodes with empty children
     pub fn new_node() -> TreeType<T>
@@ -37,14 +36,13 @@ impl<T> TreeType<T>
 /// stores a tree and its operations
 /// NOTE: there are several ways to improve teh datastructure
 /// - increasing the arity of the nodes, consumming several colors at once
-/// - storing raw leftover paths (once a value is alone in its subtree) instead of single color nodes
 #[derive(Clone)]
-pub struct RadixTree<T>
+pub struct RadixTree<T: Copy>
 {
     tree: TreeType<T>
 }
 
-impl<T> RadixTree<T>
+impl<T: Copy> RadixTree<T>
 {
     /// creates a new, empty, tree
     pub fn new() -> RadixTree<T>
@@ -65,7 +63,7 @@ impl<T> RadixTree<T>
     {
         match &self.tree
         {
-            TreeType::Leaf { value } if key.is_empty() => Some(value),
+            TreeType::Leaf { leftover_key, value } if key == &leftover_key[..] => Some(value),
             TreeType::Node { children } if !key.is_empty() =>
             {
                 // goes further in the tree
@@ -84,7 +82,7 @@ impl<T> RadixTree<T>
     {
         match &self.tree
         {
-            TreeType::Leaf { value } => value,
+            TreeType::Leaf { leftover_key, value } => value,
             TreeType::Node { children } =>
             {
                 // goes further in the tree
@@ -110,22 +108,26 @@ impl<T> RadixTree<T>
     {
         match &mut self.tree
         {
-            TreeType::Empty if key.is_empty() =>
-            {
-                // turns an empty node into a leaf
-                self.tree = TreeType::Leaf { value };
-                true
-            }
             TreeType::Empty =>
             {
-                // expands the empty node and then inserts into it
-                self.tree = TreeType::new_node();
-                self.insert(key, value)
+                // turns an empty node into a leaf
+                let leftover_key = key.iter().cloned().collect();
+                self.tree = TreeType::Leaf { leftover_key, value };
+                true
             }
-            TreeType::Leaf { value } /*if key.is_empty()*/ =>
+            TreeType::Leaf { leftover_key, value } if key == &leftover_key[..] =>
             {
-                // there was already an element at the key position, cancel the insertion
+                // there was already an element at the key position, cancels the insertion
                 false
+            }
+            TreeType::Leaf { leftover_key, value: value2 } =>
+            {
+                // the leftoverkey is different, create a node and insert both keys in it
+                let mut new_tree: RadixTree<T> = RadixTree{tree:TreeType::new_node()};
+                new_tree.insert(leftover_key, *value2);
+                new_tree.insert(key, value);
+                self.tree = new_tree.tree;
+                true
             }
             TreeType::Node { children } /*if !key.is_empty()*/ =>
             {
@@ -163,9 +165,13 @@ impl<T> RadixTree<T>
             {
                 // empty tree, we do nothing
             }
-            TreeType::Leaf { value } =>
+            TreeType::Leaf { leftover_key, value } =>
             {
-                // we reached a leaf, apply funciton to key
+                // we reached a leaf, completes the key and applies the function to it
+                for (i, color) in leftover_key.iter().enumerate()
+                {
+                    key[i + depth] = *color;
+                }
                 f(key)
             }
             TreeType::Node { children } =>
@@ -191,36 +197,47 @@ impl<T: Copy + PartialEq> RadixTree<T>
     /// as calls with `get` might panic or fail to find results
     pub fn compress(&mut self)
     {
-        // only the nodes need to be compressed
-        if let TreeType::Node { children } = &mut self.tree
+        match &mut self.tree
         {
-            // compresses the children
-            let mut has_node_child = false;
-            for child in children.iter_mut()
+            TreeType::Empty =>
             {
-                child.compress();
-                // checks if the child is a node
-                let child_is_node = matches!(&child.tree, TreeType::Node { children });
-                has_node_child = has_node_child || child_is_node;
+                // empty node, nothing to do
             }
-            // try to fuse the children if they are all leafs or empty
-            if !has_node_child
+            TreeType::Leaf { leftover_key, value } =>
             {
-                // finds the value that would be used for the leaf
-                let leaf_value = children.iter()
-                                         .find_map(|child| match &child.tree
-                                         {
-                                             TreeType::Leaf { value } => Some(value),
-                                             _ => None
-                                         })
-                                         .expect("tried to compress a node will only empty children");
-                // makes sure that all leafs share that same value
-                let identical_values =
-                    children.iter().all(|child| !matches!(&child.tree, TreeType::Leaf { value } if value != leaf_value));
-                // replaces the tree with a leaf using the value
-                if identical_values
+                // leaf, we purge the leftover key
+                *leftover_key = Box::new([]);
+            }
+            TreeType::Node { children } =>
+            {
+                // compresses the children
+                let mut has_node_child = false;
+                for child in children.iter_mut()
                 {
-                    self.tree = TreeType::Leaf { value: *leaf_value };
+                    child.compress();
+                    // checks if the child is a node
+                    let child_is_node = matches!(&child.tree, TreeType::Node { children });
+                    has_node_child = has_node_child || child_is_node;
+                }
+                // try to fuse the children if they are all leafs or empty
+                if !has_node_child
+                {
+                    // finds the value that would be used for the leaf
+                    let leaf_value = children.iter()
+                                             .find_map(|child| match &child.tree
+                                             {
+                                                 TreeType::Leaf { leftover_key, value } => Some(value),
+                                                 _ => None
+                                             })
+                                             .expect("tried to compress a node will only empty children");
+                    // makes sure that all leafs share that same value
+                    let identical_values =
+                    children.iter().all(|child| !matches!(&child.tree, TreeType::Leaf { leftover_key, value } if value != leaf_value));
+                    // replaces the tree with a leaf using the value
+                    if identical_values
+                    {
+                        self.tree = TreeType::Leaf { leftover_key: Box::new([]), value: *leaf_value };
+                    }
                 }
             }
         }
