@@ -1,4 +1,5 @@
-//! implementation of tables that maps from array of Colors to u8 values
+//! implementation of tables that maps from array of Colors to unsigne dintegers
+use ux::u4;
 use crate::cube::{Color, NB_FACES};
 
 //-----------------------------------------------------------------------------
@@ -32,6 +33,9 @@ impl<T> TreeType<T>
 // Radix Tree
 
 /// stores a tree and its operations
+/// NOTE: there are several ways to improve teh datastructure
+/// - increasing the arity of the nodes, consumming several colors at once
+/// - storing raw leftover paths (once a value is alone in its subtree) instead of single color nodes
 struct RadixTree<T>
 {
     tree: TreeType<T>
@@ -71,6 +75,25 @@ impl<T> RadixTree<T>
         }
     }
 
+    /// get the value at the given key if it is present in the tree
+    /// panics or returns another value if it isn't
+    pub fn get_unchecked(&self, key: &[Color]) -> &T
+    {
+        match &self.tree
+        {
+            TreeType::Leaf { value } => value,
+            TreeType::Node { children } =>
+            {
+                // goes further in the tree
+                let index_child = key[0] as usize;
+                let child = &children[index_child];
+                let new_key = &key[1..];
+                child.get_unchecked(new_key)
+            }
+            _ => panic!("The value isn't in the tree!")
+        }
+    }
+
     /// returns true if the tree contains the key
     pub fn contains(&self, key: &[Color]) -> bool
     {
@@ -96,12 +119,12 @@ impl<T> RadixTree<T>
                 self.tree = TreeType::new_node();
                 self.insert(key, value)
             }
-            TreeType::Leaf { value } if key.is_empty() =>
+            TreeType::Leaf { value } /*if key.is_empty()*/ =>
             {
                 // there was already an element at the key position, cancel the insertion
                 false
             }
-            TreeType::Node { children } if !key.is_empty() =>
+            TreeType::Node { children } /*if !key.is_empty()*/ =>
             {
                 // goes further in the tree
                 let index_child = key[0] as usize;
@@ -109,13 +132,15 @@ impl<T> RadixTree<T>
                 let new_key = &key[1..];
                 child.insert(new_key, value)
             }
-            _ => panic!("The keys appear to have different sizes!")
+            //_ => panic!("The keys appear to have different sizes!")
         }
     }
 
     /// applies a function to all keys, in order
     /// all key passed to f will be slices of color of length `key_length`
     /// if the tree contains longer keys, it will result in a crash
+    /// NOTE: parallel version of this function could be build with a master-slaves architecture
+    /// where a single thread is going throug the tree and feeding the keys it builds to the slaves
     pub fn for_each_key<F: FnMut(&[Color])>(&self, f: &mut F, key_length: usize)
     {
         let mut key: Vec<Color> = (0..key_length).map(|_| Color::Invalid).collect();
@@ -153,11 +178,66 @@ impl<T> RadixTree<T>
     }
 }
 
+impl<T: Copy + PartialEq> RadixTree<T>
+{
+    /// tries to reduce the size of the tree
+    /// the resulting tree is meant to be used with `get_unchecked`
+    /// as calls with `get` might panic or fail to find results
+    pub fn compress(&mut self)
+    {
+        // only the nodes need to be compressed
+        if let TreeType::Node { children } = &mut self.tree
+        {
+            // compresses the children
+            let mut has_node_child = false;
+            for child in children.iter_mut()
+            {
+                child.compress();
+                // checks if the child is a node
+                let child_is_node = matches!(&child.tree, TreeType::Node { children });
+                has_node_child = has_node_child || child_is_node;
+            }
+            // try to fuse the children if they are all leafs or empty
+            if !has_node_child
+            {
+                // finds the value that would be used for the leaf
+                let leaf_value = children.iter()
+                                         .find_map(|child| match &child.tree
+                                         {
+                                             TreeType::Leaf { value } => Some(value),
+                                             _ => None
+                                         })
+                                         .expect("tried to compress a node will only empty children");
+                // makes sure that all leafs share that same value
+                let identical_values =
+                    children.iter().all(|child| !matches!(&child.tree, TreeType::Leaf { value } if value != leaf_value));
+                // replaces the tree with a leaf using the value
+                if identical_values
+                {
+                    self.tree = TreeType::Leaf { value: *leaf_value };
+                }
+            }
+        }
+    }
+}
+
+impl RadixTree<()>
+{
+    /// inserts a new key in the set
+    /// returns true if the insertion suceeded
+    /// and false if there was already an eement with that key
+    pub fn insert_key(&mut self, key: &[Color]) -> bool
+    {
+        self.insert(key, ())
+    }
+}
+
 //-----------------------------------------------------------------------------
 // type definitions
 
-/// associate a length with a cube
-type Table = RadixTree<u8>;
+/// goes from an array of color to an integer between 0 and 15 included
+/// NOTE: the optimal solution would be to have a way to index all (and only) legal positions into an array
+type Table = RadixTree<u4>;
 
 /// used to store a set of cubes
 type CubeSet = RadixTree<()>;
