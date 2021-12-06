@@ -5,6 +5,7 @@ use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct MiniCube
 {
+    // NB_FACES^(nb_colors*4) fits just right in 64 bits
     data: u64
 }
 
