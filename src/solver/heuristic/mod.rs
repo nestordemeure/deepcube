@@ -1,5 +1,6 @@
 use crate::cube::Cube;
 mod corners;
+mod miniCube;
 pub use corners::CornersHeuristic;
 
 /// implemented by all heuristics to be used in algorithms such as A*
