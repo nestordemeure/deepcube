@@ -11,9 +11,44 @@ pub struct MiniCube
 
 impl MiniCube
 {
-    /// turns an array into a unique integer
-    fn from_array(colors: &[Color; NB_FACES * 4]) -> MiniCube
+    /// takes an array and changes its colors
+    /// building a mapping on the fly
+    /// each color encountered is associated with a color in order
+    /// NOTE: with this normalization step all final states are equal
+    ///       however, it can produce some states that would be impossible with a normal cube
+    fn recolor_array(colors: &mut [Color; NB_FACES * 4])
     {
+        // mapping from old colors to new colors
+        let mut new_colors = [Color::Invalid; NB_FACES];
+        // index of the next color to use
+        let mut current_color = 0;
+        // square by square, goes from old colors to new colors
+        for color in colors.iter_mut()
+        {
+            let color_index = *color as usize;
+            match new_colors[color_index]
+            {
+                Color::Invalid =>
+                {
+                    let new_color = Color::ALL[current_color];
+                    current_color += 1;
+                    new_colors[color_index] = new_color;
+                    *color = new_color;
+                }
+                new_color =>
+                {
+                    *color = new_color;
+                }
+            }
+        }
+    }
+
+    /// turns an array into a unique integer
+    fn from_array(mut colors: [Color; NB_FACES * 4]) -> MiniCube
+    {
+        // normalizes colors
+        MiniCube::recolor_array(&mut colors);
+        // converts colors into a single integer
         let nb_colors = NB_FACES as u64;
         let data = colors.iter()
                          .map(|color| *color as u64) // converts colors into integers
@@ -22,6 +57,7 @@ impl MiniCube
     }
 
     /// turns the integer back into an array
+    /// NOTE: this is not a perfect bijection due to the color normalization done at the previous step
     fn to_array(self) -> [Color; NB_FACES * 4]
     {
         let nb_colors = NB_FACES as u64;
@@ -58,7 +94,7 @@ impl MiniCube
             result_face[3] = face[8];
         }
 
-        MiniCube::from_array(&result)
+        MiniCube::from_array(result)
     }
 
     /// takes a minicube and turns it into a full cube filling the corners with the colors
@@ -105,7 +141,7 @@ impl MiniCube
             result_face[3] = face[7];
         }
 
-        MiniCube::from_array(&result)
+        MiniCube::from_array(result)
     }
 
     /// takes a minicube and turns it into a full cube filling the corners with the colors
@@ -133,3 +169,9 @@ impl MiniCube
         Cube { squares }
     }
 }
+
+/*
+the conversion into corners should include some color normalization to reduce the search space due to its invariances
+a corner can be uniquely identified by its triplet of colors (ignoring orientation information)
+the we color as we go strategy might be viable: with this strategy all solutions cubes are equivalent
+*/

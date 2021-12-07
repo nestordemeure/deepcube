@@ -39,6 +39,7 @@ impl CornersHeuristic
         // run until we cannot find new corners
         while !previous_cubes.is_empty()
         {
+            // turns old corners into new corners
             let new_cubes =
                 previous_cubes.into_iter()
                               .map(MiniCube::to_corners)
@@ -53,7 +54,7 @@ impl CornersHeuristic
         }
 
         // display final informations on the table
-        println!("Done! (maximum distance:{} table size:{})", distance_to_solved - 1, table.len());
+        println!("Done! (maximum distance:{} table size:{})", distance_to_solved - 2, table.len());
         // returns the table
         CornersHeuristic { table }
     }
