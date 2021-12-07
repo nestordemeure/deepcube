@@ -1,6 +1,9 @@
 use std::collections::{BTreeMap, btree_map::Entry};
 use super::miniCube::MiniCube;
 
+//-----------------------------------------------------------------------------
+// SEQUENTIAL
+
 /// used to store distances to cubes
 /// TODO: we might want to use a more memory efficient datastructure instead of the btree: https://crates.io/crates/btree-slab
 pub struct Table
@@ -24,7 +27,7 @@ impl Table
     }
 
     /// adds a pair minicube/distance to the table
-    /// returns false if the minicube was already known (in wihich case no insertion is performed)
+    /// returns false if the minicube was already known (in which case no insertion is performed)
     pub fn insert(&mut self, minicube: MiniCube, distance: u8) -> bool
     {
         match self.table.entry(minicube)
@@ -49,15 +52,9 @@ impl Table
 /// to enable collection into a table
 impl FromIterator<(MiniCube, u8)> for Table
 {
-    fn from_iter<I: IntoIterator<Item = (MiniCube, u8)>>(iter: I) -> Self
+    fn from_iter<I: IntoIterator<Item = (MiniCube, u8)>>(iter: I) -> Table
     {
-        let mut table = Table::new();
-
-        for (minicube, distance) in iter
-        {
-            table.insert(minicube, distance);
-        }
-
-        table
+        let table: BTreeMap<MiniCube, u8> = iter.into_iter().collect();
+        Table { table }
     }
 }

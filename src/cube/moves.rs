@@ -142,8 +142,6 @@ impl Cube
         {
             squares[m.apply(index)] = color;
         }
-        // insures that we have covered all colors
-        debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
         Cube { squares }
     }
 
@@ -156,8 +154,6 @@ impl Cube
             let new_index = Coordinate1D::new(index).rotate(axis).x;
             squares[new_index] = color;
         }
-        // insures that we have covered all colors
-        debug_assert!(squares.iter().all(|c| *c != Color::Invalid));
         Cube { squares }
     }
 }

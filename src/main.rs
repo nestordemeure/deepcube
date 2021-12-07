@@ -32,6 +32,7 @@ fn main()
         cube.apply_move(&m).display();
     }*/
 
-    // generate the corner heuristic
-    let corner_heuristic = solver::heuristic::CornersHeuristic::new();
+    // generate the heuristics
+    //let corners_heuristic = solver::heuristic::CornersHeuristic::new();
+    let middles_heuristic = solver::heuristic::MiddlesHeuristic::new();
 }

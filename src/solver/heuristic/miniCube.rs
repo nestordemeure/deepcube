@@ -44,11 +44,8 @@ impl MiniCube
     }
 
     /// turns an array into a unique integer
-    fn from_array(mut colors: [Color; NB_FACES * 4]) -> MiniCube
+    fn from_array(colors: [Color; NB_FACES * 4]) -> MiniCube
     {
-        // normalizes colors
-        MiniCube::recolor_array(&mut colors);
-        // converts colors into a single integer
         let nb_colors = NB_FACES as u64;
         let data = colors.iter()
                          .map(|color| *color as u64) // converts colors into integers
@@ -57,7 +54,6 @@ impl MiniCube
     }
 
     /// turns the integer back into an array
-    /// NOTE: this is not a perfect bijection due to the color normalization done at the previous step
     fn to_array(self) -> [Color; NB_FACES * 4]
     {
         let nb_colors = NB_FACES as u64;
@@ -93,6 +89,10 @@ impl MiniCube
             result_face[2] = face[6];
             result_face[3] = face[8];
         }
+
+        // normalizes colors in order to reduce the number of possibilities
+        // NOTE: due to this step the transformation is not a bijection
+        MiniCube::recolor_array(&mut result);
 
         MiniCube::from_array(result)
     }
@@ -169,9 +169,3 @@ impl MiniCube
         Cube { squares }
     }
 }
-
-/*
-the conversion into corners should include some color normalization to reduce the search space due to its invariances
-a corner can be uniquely identified by its triplet of colors (ignoring orientation information)
-the we color as we go strategy might be viable: with this strategy all solutions cubes are equivalent
-*/
