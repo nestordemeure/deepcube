@@ -1,5 +1,5 @@
 use crate::cube::Cube;
-mod miniCube;
+mod minicube;
 mod table;
 mod corners;
 mod middles;

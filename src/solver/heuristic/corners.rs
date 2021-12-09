@@ -1,6 +1,6 @@
 use crate::cube::{Cube, Move};
 use super::Heuristic;
-use super::miniCube::MiniCube;
+use super::minicube::MiniCube;
 use super::table::Table;
 
 /// estimates the number of twist needed to get the corners in the correct position

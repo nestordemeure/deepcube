@@ -33,6 +33,6 @@ fn main()
     }*/
 
     // generate the heuristics
-    //let corners_heuristic = solver::heuristic::CornersHeuristic::new();
-    let middles_heuristic = solver::heuristic::MiddlesHeuristic::new();
+    //let _corners_heuristic = solver::heuristic::CornersHeuristic::new();
+    let _middles_heuristic = solver::heuristic::MiddlesHeuristic::new();
 }

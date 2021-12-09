@@ -13,10 +13,8 @@ impl MiniCube
 {
     /// takes an array and changes its colors
     /// building a mapping on the fly
-    /// each color encountered is associated with a color in order
-    /// NOTE: with this normalization step all final states are equal
-    ///       however, it can produce some states that would be impossible with a normal cube
-    fn recolor_array(colors: &mut [Color; NB_FACES * 4])
+    /// each color encountered is associated with a color, in order
+    fn recolor_array_onthefly(colors: &mut [Color; NB_FACES * 4])
     {
         // mapping from old colors to new colors
         let mut new_colors = [Color::Invalid; NB_FACES];
@@ -40,6 +38,18 @@ impl MiniCube
                     *color = new_color;
                 }
             }
+        }
+    }
+
+    /// takes an array and changes its colors
+    /// does so by dividing by 2 the number of colors
+    fn recolor_array_reducedcolor(colors: &mut [Color; NB_FACES * 4], nb_colors: usize)
+    {
+        for color in colors.iter_mut()
+        {
+            let color_index = *color as usize;
+            let reduced_color_index = color_index.max(nb_colors); //color_index % nb_colors;
+            *color = Color::ALL[reduced_color_index];
         }
     }
 
@@ -92,7 +102,7 @@ impl MiniCube
 
         // normalizes colors in order to reduce the number of possibilities
         // NOTE: due to this step the transformation is not a bijection
-        MiniCube::recolor_array(&mut result);
+        MiniCube::recolor_array_onthefly(&mut result);
 
         MiniCube::from_array(result)
     }
@@ -141,6 +151,10 @@ impl MiniCube
             result_face[3] = face[7];
         }
 
+        // reduce number of colors in order to make problem manageable
+        // NOTE: due to this step the transformation is not a bijection
+        MiniCube::recolor_array_reducedcolor(&mut result, 3);
+
         MiniCube::from_array(result)
     }
 
@@ -148,7 +162,7 @@ impl MiniCube
     /// all other colors are left Invalid
     pub fn to_middles(self) -> Cube
     {
-        let corners = self.to_array();
+        let middles = self.to_array();
         let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
 
         for index_face in 0..NB_FACES
@@ -158,12 +172,12 @@ impl MiniCube
             let end_index = start_index + NB_SQUARES_FACE;
             let face = &mut squares[start_index..end_index];
             // gets the middles corresponding to the face
-            let corners_face = &corners[index_face * 4..];
+            let middles_face = &middles[index_face * 4..];
             // put the four middles back in the face
-            face[1] = corners_face[0];
-            face[3] = corners_face[1];
-            face[5] = corners_face[2];
-            face[7] = corners_face[3];
+            face[1] = middles_face[0];
+            face[3] = middles_face[1];
+            face[5] = middles_face[2];
+            face[7] = middles_face[3];
         }
 
         Cube { squares }

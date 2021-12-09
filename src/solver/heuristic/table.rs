@@ -1,8 +1,5 @@
 use std::collections::{BTreeMap, btree_map::Entry};
-use super::miniCube::MiniCube;
-
-//-----------------------------------------------------------------------------
-// SEQUENTIAL
+use super::minicube::MiniCube;
 
 /// used to store distances to cubes
 /// TODO: we might want to use a more memory efficient datastructure instead of the btree: https://crates.io/crates/btree-slab
