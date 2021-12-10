@@ -23,10 +23,12 @@ impl Heuristic for CornersHeuristic
 
 impl CornersHeuristic
 {
+    /// initialize the heuristic
     pub fn new() -> CornersHeuristic
     {
         // builds a new encoder
         let encoder = CornerEncoder::new();
+
         // builds a new table, full of None so far
         let mut table: Vec<Option<u8>> = (0..encoder.nb_corners_code()).map(|_| None).collect();
         let mut nb_states = 0;
@@ -60,7 +62,6 @@ impl CornersHeuristic
                                                   None =>
                                                   {
                                                       *result = Some(distance_to_solved);
-                                                      nb_states += 1;
                                                       true
                                                   }
                                                   Some(_) => false
@@ -68,6 +69,7 @@ impl CornersHeuristic
                                           })
                                           .collect();
             previous_cubes = new_cubes;
+            nb_states += previous_cubes.len();
             // displays information on the run so far
             println!("Corners: did distance {} ({} distinct states so far).", distance_to_solved, nb_states);
             distance_to_solved += 1;
@@ -85,5 +87,5 @@ impl CornersHeuristic
 }
 
 /*
-implement a parallel version with Cell and rayon
+is there a way to make the code parallel while insuring no/little memory overhead?
 */

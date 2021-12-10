@@ -11,7 +11,9 @@ pub struct CornerEncoder
     /// turns a corner index and an orientation index into a triplet of colors
     color_triplet_of_corner_and_orientation_table: [(Color, Color, Color); Self::NB_LEGAL_COLOR_TRIPLETS],
     /// 1D coordinates of the faces making each corner
-    corners_1D_indexes: [(usize, usize, usize); Self::NB_CORNERS]
+    corners_1D_indexes: [(usize, usize, usize); Self::NB_CORNERS],
+    /// whether each corner is a top corner or a bottom corner
+    corners_is_top: [bool; Self::NB_CORNERS]
 }
 
 impl CornerEncoder
@@ -32,7 +34,7 @@ impl CornerEncoder
     const NB_COLOR_TRIPLETS: usize = Self::NB_COLORS * Self::NB_COLORS * Self::NB_COLORS;
 
     /// number of legal, present on actual cubes, triplet of colors
-    const NB_LEGAL_COLOR_TRIPLETS: usize = Self::NB_ORIENTATIONS * Self::NB_CORNERS;
+    const NB_LEGAL_COLOR_TRIPLETS: usize = Self::NB_ORIENTATIONS * 2 * Self::NB_CORNERS;
 
     //-------------------------------------------------------------------------
     // PRECOMPUTATION
@@ -46,9 +48,14 @@ impl CornerEncoder
         i1 + Self::NB_COLORS * (i2 + Self::NB_COLORS * i3)
     }
 
-    /// turns a pair (corner_index, orientation_index) into an index
-    fn index_of_corner_orientation(corner_index: u8, orientation_index: usize) -> usize
+    /// turns a triplet (corner_index, orientation_index, is_top) into an index
+    fn index_of_corner_orientation(corner_index: u8, mut orientation_index: usize, is_top: bool) -> usize
     {
+        // there are twice as many orientation if we take the top/bottom aspect into account
+        if is_top
+        {
+            orientation_index += Self::NB_ORIENTATIONS;
+        }
         (corner_index as usize) + orientation_index * Self::NB_CORNERS
     }
 
@@ -77,33 +84,33 @@ impl CornerEncoder
 
             let index = CornerEncoder::index_of_color_triplet(c1, c2, c3);
             t2co[index] = (corner_index, 0);
-            let index = CornerEncoder::index_of_corner_orientation(corner_index, 0);
+            let index = CornerEncoder::index_of_corner_orientation(corner_index, 0, true);
             co2t[index] = (c1, c2, c3);
 
             let index = CornerEncoder::index_of_color_triplet(c1, c3, c2);
             t2co[index] = (corner_index, 0);
-            let index = CornerEncoder::index_of_corner_orientation(corner_index, 0);
-            co2t[index] = (c1, c2, c3);
+            let index = CornerEncoder::index_of_corner_orientation(corner_index, 0, false);
+            co2t[index] = (c1, c3, c2);
 
             let index = CornerEncoder::index_of_color_triplet(c2, c1, c3);
             t2co[index] = (corner_index, 1);
-            let index = CornerEncoder::index_of_corner_orientation(corner_index, 1);
-            co2t[index] = (c1, c2, c3);
+            let index = CornerEncoder::index_of_corner_orientation(corner_index, 1, true);
+            co2t[index] = (c2, c1, c3);
 
             let index = CornerEncoder::index_of_color_triplet(c2, c3, c1);
             t2co[index] = (corner_index, 1);
-            let index = CornerEncoder::index_of_corner_orientation(corner_index, 1);
-            co2t[index] = (c1, c2, c3);
-
-            let index = CornerEncoder::index_of_color_triplet(c3, c1, c2);
-            t2co[index] = (corner_index, 2);
-            let index = CornerEncoder::index_of_corner_orientation(corner_index, 2);
-            co2t[index] = (c1, c2, c3);
+            let index = CornerEncoder::index_of_corner_orientation(corner_index, 1, false);
+            co2t[index] = (c2, c3, c1);
 
             let index = CornerEncoder::index_of_color_triplet(c3, c2, c1);
             t2co[index] = (corner_index, 2);
-            let index = CornerEncoder::index_of_corner_orientation(corner_index, 2);
-            co2t[index] = (c1, c2, c3);
+            let index = CornerEncoder::index_of_corner_orientation(corner_index, 2, true);
+            co2t[index] = (c3, c2, c1);
+
+            let index = CornerEncoder::index_of_color_triplet(c3, c1, c2);
+            t2co[index] = (corner_index, 2);
+            let index = CornerEncoder::index_of_corner_orientation(corner_index, 2, false);
+            co2t[index] = (c3, c1, c2);
         }
 
         (t2co, co2t)
@@ -111,15 +118,18 @@ impl CornerEncoder
 
     /// list the indexes for all the corners
     /// the faces are given in order left_right, down_up, front_back
-    fn compute_corners_1D_indexes() -> [(usize, usize, usize); Self::NB_CORNERS]
+    fn compute_corners_1D_indexes() -> ([(usize, usize, usize); Self::NB_CORNERS], [bool; Self::NB_CORNERS])
     {
         // all the corner coordinates
         let coordinates =
-            vec![(0, 0, 0), (2, 0, 0), (0, 2, 0), (0, 0, 2), (2, 2, 0), (2, 0, 2), (0, 2, 2), (2, 2, 2)];
+            [(0, 0, 0), (2, 0, 0), (0, 2, 0), (0, 0, 2), (2, 2, 0), (2, 0, 2), (0, 2, 2), (2, 2, 2)];
+
+        // whether each corner is on the top or bottom layer
+        let is_top = coordinates.map(|(_lr, du, _fb)| du > 1);
 
         // turns 3D corner coordinates into 1D faces coordinates
-        let mut result = [(0, 0, 0); Self::NB_CORNERS];
-        for ((lr, du, fb), corner_result) in coordinates.into_iter().zip(result.iter_mut())
+        let mut corners_coordinates = [(0, 0, 0); Self::NB_CORNERS];
+        for ((lr, du, fb), corner_result) in coordinates.into_iter().zip(corners_coordinates.iter_mut())
         {
             let c_lr = Coordinate3D::new(lr, du, fb, RotationAxis::LeftRight).to_1D().x;
             let c_du = Coordinate3D::new(lr, du, fb, RotationAxis::DownUp).to_1D().x;
@@ -127,7 +137,7 @@ impl CornerEncoder
             *corner_result = (c_lr, c_du, c_fb);
         }
 
-        result
+        (corners_coordinates, is_top)
     }
 
     //-------------------------------------------------------------------------
@@ -138,16 +148,17 @@ impl CornerEncoder
     {
         let (corner_and_orientation_of_color_triplet_table, color_triplet_of_corner_and_orientation_table) =
             CornerEncoder::compute_tables();
-        let corners_1D_indexes = CornerEncoder::compute_corners_1D_indexes();
+        let (corners_1D_indexes, corners_is_top) = CornerEncoder::compute_corners_1D_indexes();
         CornerEncoder { corner_and_orientation_of_color_triplet_table,
                         color_triplet_of_corner_and_orientation_table,
-                        corners_1D_indexes }
+                        corners_1D_indexes,
+                        corners_is_top }
     }
 
     /// returns the number of (consecutive) corner code that can be produced by the encoder
     pub fn nb_corners_code(&self) -> usize
     {
-        Lehmer::max_value(Self::NB_CORNERS) * Self::NB_ORIENTATIONS.pow(Self::NB_CORNERS as u32)
+        (Lehmer::max_value(Self::NB_CORNERS) + 1) * Self::NB_ORIENTATIONS.pow(Self::NB_CORNERS as u32)
     }
 
     /// takes a cube
@@ -171,7 +182,7 @@ impl CornerEncoder
             total_orientation_index = total_orientation_index * Self::NB_ORIENTATIONS + orientation_index;
         }
         let permutation_index = Lehmer::from_permutation(&permutation).to_decimal();
-        permutation_index + total_orientation_index * Lehmer::max_value(Self::NB_CORNERS)
+        permutation_index + total_orientation_index * (Lehmer::max_value(Self::NB_CORNERS) + 1)
     }
 
     /// takes a corner code
@@ -182,7 +193,7 @@ impl CornerEncoder
     pub fn cube_of_corner_code(&self, corners_code: usize) -> Cube
     {
         // splits corners_code into both pieces of information
-        let max_permutation_index = Lehmer::max_value(Self::NB_CORNERS);
+        let max_permutation_index = Lehmer::max_value(Self::NB_CORNERS) + 1;
         let permutation_index = corners_code % max_permutation_index;
         let mut total_orientation_index = corners_code / max_permutation_index;
         // rebuilds the permutation
@@ -191,12 +202,14 @@ impl CornerEncoder
         let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
         for (i, (i1, i2, i3)) in self.corners_1D_indexes.iter().enumerate().rev()
         {
-            // gets corner_index and orientation_index back
+            // gets corner_index, orientation_index and is_top back
             let corner_index = permutation[i];
             let orientation_index = total_orientation_index % Self::NB_ORIENTATIONS;
             total_orientation_index /= Self::NB_ORIENTATIONS;
+            let is_top = self.corners_is_top[i];
             // gets the color back
-            let triplet_index = CornerEncoder::index_of_corner_orientation(corner_index, orientation_index);
+            let triplet_index =
+                CornerEncoder::index_of_corner_orientation(corner_index, orientation_index, is_top);
             let (c1, c2, c3) = self.color_triplet_of_corner_and_orientation_table[triplet_index];
             // rebuilds the corner
             squares[*i1] = c1;
@@ -207,8 +220,3 @@ impl CornerEncoder
         Cube { squares }
     }
 }
-
-/*
-the bijection is problematic as we do not have enough information to deduce the orientation
-at the moment an arbitrary (potentialy mirror) orientation will be picked
-*/
