@@ -174,7 +174,7 @@ pub enum RotationAxis
 /// this format is very easy to rotate correctly
 /// one downside of this format is that some position do not correspond to a square on the cube
 #[derive(Clone)]
-struct Coordinate3D
+pub struct Coordinate3D
 {
     /// right to left
     /// 0 to NB_SQUARES_SIDE-1
@@ -192,14 +192,20 @@ struct Coordinate3D
 
 impl Coordinate3D
 {
+    /// creates a new set of 3D coordinates
+    pub fn new(left_right: usize, down_up: usize, front_back: usize, axis: RotationAxis) -> Coordinate3D
+    {
+        Coordinate3D { left_right, down_up, front_back, axis }
+    }
+
     /// converts into 1D coordinates
-    fn to_1D(&self) -> Coordinate1D
+    pub fn to_1D(&self) -> Coordinate1D
     {
         self.to_2D().to_1D()
     }
 
     /// converts into 2D coordinates
-    fn to_2D(&self) -> Coordinate2D
+    pub fn to_2D(&self) -> Coordinate2D
     {
         match self.axis
         {

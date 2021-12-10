@@ -4,7 +4,7 @@ use rand::seq::SliceRandom;
 pub mod sizes;
 mod color;
 mod moves;
-mod coordinates;
+pub mod coordinates;
 mod display;
 pub use color::Color;
 pub use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE, NB_SQUARES_SIDE};
