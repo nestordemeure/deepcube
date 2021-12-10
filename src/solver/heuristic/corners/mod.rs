@@ -60,6 +60,7 @@ impl CornersHeuristic
                                                   None =>
                                                   {
                                                       *result = Some(distance_to_solved);
+                                                      nb_states += 1;
                                                       true
                                                   }
                                                   Some(_) => false
@@ -82,3 +83,7 @@ impl CornersHeuristic
         CornersHeuristic { encoder, table }
     }
 }
+
+/*
+implement a parallel version with Cell and rayon
+*/
