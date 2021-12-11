@@ -3,6 +3,7 @@ mod corners;
 pub use corners::CornersHeuristic;
 mod middles;
 pub use middles::MiddlesHeuristic;
+mod permutations;
 
 /// implemented by all heuristics to be used in algorithms such as A*
 pub trait Heuristic

@@ -1,7 +1,8 @@
 mod encoding;
+mod encoding_lower;
 use crate::cube::{Cube, Move};
 use super::Heuristic;
-use encoding::MiddleEncoder;
+use encoding_lower::MiddleEncoder;
 
 /// estimates the number of twist needed to get the Middles in the correct position
 /// this is then used as a lower bound for the number of twist left before resolution

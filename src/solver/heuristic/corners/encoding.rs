@@ -1,6 +1,6 @@
 use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
-use lehmer::Lehmer;
+use super::super::permutations::{nb_permutations, decimal_from_permutation, permutation_from_decimal};
 
 /// used to turn a cube into a single, unique and consecutiv, corners code
 /// and back again
@@ -158,7 +158,7 @@ impl CornerEncoder
     /// returns the number of (consecutive) corner code that can be produced by the encoder
     pub fn nb_corners_code(&self) -> usize
     {
-        (Lehmer::max_value(Self::NB_CORNERS) + 1) * Self::NB_ORIENTATIONS.pow(Self::NB_CORNERS as u32)
+        nb_permutations(Self::NB_CORNERS) * Self::NB_ORIENTATIONS.pow(Self::NB_CORNERS as u32)
     }
 
     /// takes a cube
@@ -181,8 +181,8 @@ impl CornerEncoder
             permutation[i] = corner_index;
             total_orientation_index = total_orientation_index * Self::NB_ORIENTATIONS + orientation_index;
         }
-        let permutation_index = Lehmer::from_permutation(&permutation).to_decimal();
-        permutation_index + total_orientation_index * (Lehmer::max_value(Self::NB_CORNERS) + 1)
+        let permutation_index = decimal_from_permutation(&permutation);
+        permutation_index + total_orientation_index * nb_permutations(Self::NB_CORNERS)
     }
 
     /// takes a corner code
@@ -193,11 +193,11 @@ impl CornerEncoder
     pub fn cube_of_corner_code(&self, corners_code: usize) -> Cube
     {
         // splits corners_code into both pieces of information
-        let max_permutation_index = Lehmer::max_value(Self::NB_CORNERS) + 1;
+        let max_permutation_index = nb_permutations(Self::NB_CORNERS);
         let permutation_index = corners_code % max_permutation_index;
         let mut total_orientation_index = corners_code / max_permutation_index;
         // rebuilds the permutation
-        let permutation = Lehmer::from_decimal(permutation_index, Self::NB_CORNERS).to_permutation();
+        let permutation = permutation_from_decimal(permutation_index, Self::NB_CORNERS);
         // rebuilds the cube corner per corner
         let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
         for (i, (i1, i2, i3)) in self.corners_1D_indexes.iter().enumerate().rev()
