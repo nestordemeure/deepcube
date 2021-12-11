@@ -80,8 +80,8 @@ pub fn partial_permutation_from_decimal(decimal: usize,
         iteration += 1;
         // base = (nb_elements_total - 1 - i) pick (nb_elements - 1 - i)
         //      = (nb_elements_total - 1 - i)! / (nb_elements_total - nb_elements)
-        let base = product / denom_base;
-        let divisor = decimal / base;
+        //let base = product / denom_base;
+        let divisor = (denom_base * decimal) / product; //decimal / base;
         let remainder = divisor % iteration;
         code[index] = remainder as u8;
     }
