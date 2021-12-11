@@ -61,7 +61,7 @@ impl Cube
             print!("{}", colored_text);
         };
 
-        // displays top squares
+        // displays top square
         for y in (0..NB_SQUARES_SIDE).rev()
         {
             print!("      "); // empty line
@@ -85,7 +85,7 @@ impl Cube
             println!();
         }
 
-        // displays bottom squares
+        // displays bottom square
         for y in (0..NB_SQUARES_SIDE).rev()
         {
             print!("      "); // empty line

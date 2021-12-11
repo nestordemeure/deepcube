@@ -11,6 +11,8 @@ pub use sizes::{NB_FACES, NB_SQUARES_CUBE, NB_SQUARES_FACE, NB_SQUARES_SIDE};
 pub use moves::Move;
 pub use coordinates::{Face, Coordinate1D, Coordinate2D, RotationAxis};
 
+use self::color::NB_COLORS;
+
 //-----------------------------------------------------------------------------
 // Cube
 
@@ -99,59 +101,8 @@ impl Cube
         self.squares[index]
     }
 
-    /// turns the cube into an array of references to faces ordered according to the default color order
-    /// this is useful for transformation (such as hashing)
-    /// as it insures that the transformation is not impacted by the orientation of the cube
-    fn get_oriented_faces(&self) -> [&[Color]; NB_FACES]
-    {
-        let mut faces: [&[Color]; NB_FACES] = [&self.squares[..]; NB_FACES];
-        for index_face in 0..NB_FACES
-        {
-            // extracts the face
-            let start_index = index_face * NB_SQUARES_FACE;
-            let end_index = start_index + NB_SQUARES_FACE;
-            let face = &self.squares[start_index..end_index];
-            // gets the color of the center element of the face
-            let color_center = face[NB_SQUARES_SIDE + NB_SQUARES_SIDE / 2];
-            // saves the face, indexing it according to its center color
-            faces[color_center as usize] = face;
-        }
-        faces
-    }
-
-    /// returns a pair of array
-    /// the first one is the colors of the 4 corners of all the faces
-    /// the second one is the colors of the 4 middles of all the faces
-    /// this information is used by some heuristics
-    pub fn get_corners_middles(&self) -> ([Color; NB_FACES * 4], [Color; NB_FACES * 4])
-    {
-        let mut result_corners = [Color::Invalid; NB_FACES * 4];
-        let mut result_middles = [Color::Invalid; NB_FACES * 4];
-        for index_face in 0..NB_FACES
-        {
-            // extracts the face
-            let start_index = index_face * NB_SQUARES_FACE;
-            let end_index = start_index + NB_SQUARES_FACE;
-            let face = &self.squares[start_index..end_index];
-            // gets the results corresponding to the face
-            let result_corners_face = &mut result_corners[index_face * 4..];
-            let result_middles_face = &mut result_middles[index_face * 4..];
-            // stores the four corners
-            result_corners_face[0] = face[0];
-            result_corners_face[1] = face[2];
-            result_corners_face[2] = face[6];
-            result_corners_face[3] = face[8];
-            // stores the four middles
-            result_middles_face[0] = face[1];
-            result_middles_face[1] = face[3];
-            result_middles_face[2] = face[5];
-            result_middles_face[3] = face[7];
-        }
-        (result_corners, result_middles)
-    }
-
     /// scrambles the cube a given number of times to produce a new, random, cube
-    fn scramble(&self, nb_scramble: usize) -> Cube
+    pub fn scramble(&self, nb_scramble: usize) -> Cube
     {
         let mut rng = rand::thread_rng();
         let mut result = self.clone();
@@ -160,6 +111,58 @@ impl Cube
         {
             let random_move = moves.choose(&mut rng).unwrap();
             result = result.apply_move(random_move);
+        }
+        result
+    }
+
+    /// converts the cube into a unique identifier
+    /// we use the colors of the center squares to put the cube in standard orientation
+    /// we do not encode the center square as it is always of the same color
+    /// we do not encode the last face as it is entirely deifned by the other faces
+    pub fn to_identifier(&self) -> u128
+    {
+        // constants with the proper types
+        let nb_colors_u128 = NB_COLORS as u128;
+        let nb_squares_per_face = (NB_SQUARES_FACE - 1) as u32; // we ignore the center square
+        let index_face_ignored = (NB_FACES - 1) as u32; // the last face is not encoded
+
+        // looping on all faces
+        let mut result: u128 = 0;
+        for index_face in 0..NB_FACES
+        {
+            // extracts the face that we are currently checking
+            let start_index = index_face * NB_SQUARES_FACE;
+            let end_index = start_index + NB_SQUARES_FACE;
+            let face = &self.squares[start_index..end_index];
+
+            // gets the index of the face using its center square
+            let rotated_index_face = face[4] as u32;
+            // we do not encode the last face as it can be deduced from the other faces
+            if rotated_index_face == index_face_ignored
+            {
+                continue;
+            }
+
+            // computes a code uniquely identifying the face
+            let mut result_face = 0;
+            // 4 squares before center square
+            for i in 0..4
+            {
+                let color_index = face[i] as usize;
+                result_face = result_face * NB_COLORS + color_index;
+            }
+            // 4 squares after center square
+            for i in 5..NB_SQUARES_FACE
+            {
+                let color_index = face[i] as usize;
+                result_face = result_face * NB_COLORS + color_index;
+            }
+
+            // computes the multiplication factor uniquely identifying the center color
+            let face_shift = nb_colors_u128.pow(nb_squares_per_face * rotated_index_face);
+
+            // assemble
+            result += (result_face as u128) * face_shift;
         }
         result
     }
