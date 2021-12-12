@@ -1,5 +1,3 @@
-use lehmer::Lehmer;
-
 /// computes the factorial of a number
 fn factorial(n: usize) -> usize
 {
@@ -18,15 +16,79 @@ pub fn nb_permutations(nb_elements: usize) -> usize
 }
 
 /// turns a permutation into a decimal number
-pub fn decimal_from_permutation(partial_permutation: &[u8]) -> usize
+pub fn decimal_from_permutation(permutation: &[u8]) -> usize
 {
-    Lehmer::from_permutation(partial_permutation).to_decimal()
+    /*
+    recurcive version, for ease of understanding:
+    encoding([]) = 0
+    encoding([x0]) = x0 = 0 + 1*encoding([]) (0 is the only possibility for x0)
+    encoding([x0,x1]) = x1 + 2*encoding([x0])
+    encoding([x0,x1,x2]) = x2 + 3*encoding([x1,x0]) = x2 + 3*(x1 + 2*x0)) = x2 + 3*x1 + 3*2*x0
+    encoding(n element) is between 0 and n! excluded
+    before going to the recursive step, one should be careful to push all values below the one we just used
+    */
+
+    // number of elements in the permutation
+    let nb_elements = permutation.len();
+    // the result we will return
+    let mut result = 0;
+    // represents the indices shifted after each value removal
+    let mut shifted_indices: Vec<usize> = (0..nb_elements).collect();
+    // how many elements are left to process
+    let mut nb_elements_left = nb_elements;
+    // the base by which we are multiplying
+    let mut base = 1;
+
+    // adds elements one after the other
+    // we skip the last elements as ot will necesearily be 0
+    for i in permutation.iter().take(nb_elements - 1).map(|i| *i as usize)
+    {
+        // gets shifted index
+        let shifted_i = shifted_indices[i];
+        // updates shift
+        for j in (i + 1)..nb_elements
+        {
+            shifted_indices[j] -= 1;
+        }
+        // updates result
+        result += base * shifted_i;
+        // updates base for next iteration
+        base *= nb_elements_left;
+        nb_elements_left -= 1;
+    }
+
+    result
 }
 
 /// turns a decimal number into a partial permutation
-pub fn permutation_from_decimal(decimal: usize, nb_elements_total: usize) -> Vec<u8>
+pub fn permutation_from_decimal(mut decimal: usize, nb_elements: usize) -> Vec<u8>
 {
-    Lehmer::from_decimal(decimal, nb_elements_total).to_permutation()
+    /*
+    recurcive version, for ease of understanding:
+    encoding([x0,x1,x2]) = x2 + 3*encoding([x1,x0]) = x2 + 3*(x1 + 2*x0)) = x2 + 3*x1 + 3*2*x0
+    using a modulo one can easily reverse the operation
+    decoding(x, nb_elements) = [decoding(x/nb_elements, nb_elements-1).., x%nb_elements]
+    */
+
+    // the permutation we will return
+    let mut permutation: Vec<u8> = vec![0; nb_elements];
+    // represents the indices shifted after each value removal
+    let mut unshifted_indices: Vec<usize> = (0..nb_elements).collect();
+
+    // rebuild elements one after the other
+    for (i, nb_elements_left) in (1..=nb_elements).rev().enumerate()
+    {
+        // gets index and updates decimal
+        let shifted_i = decimal % nb_elements_left;
+        decimal /= nb_elements_left;
+        // unshifts index and update unshifting table
+        let unshifted_i = unshifted_indices[shifted_i];
+        unshifted_indices.remove(shifted_i);
+        // updates permutation
+        permutation[i] = unshifted_i as u8;
+    }
+
+    permutation
 }
 
 /// returns the number of permutations possible with nb_elements
@@ -38,61 +100,68 @@ pub fn nb_partial_permutations(nb_elements: usize, nb_elements_total: usize) -> 
 }
 
 /// turns a partial permutation into a decimal number
-pub fn decimal_from_partial_permutation(partial_permutation: &[u8], nb_elements_total: usize) -> usize
+///
+/// this function does the same thing as decimal_from_permutation but stops early
+pub fn decimal_from_partial_permutation(partial_permutation: &[u8], nb_elements: usize) -> usize
 {
-    // computes the lehmer code for the permutation (same as non-partial permutation)
-    let code = Lehmer::from_permutation(partial_permutation).code;
+    // the result we will return
+    let mut result = 0;
+    // represents the indices shifted after each value removal
+    let mut shifted_indices: Vec<usize> = (0..nb_elements).collect();
+    // how many elements are left to process
+    let mut nb_elements_left = nb_elements;
+    // the base by which we are multiplying
+    let mut base = 1;
 
-    // converts the code into a decimal number
-    // using an algorithm adapted to partial_permutations
-    // see `Indexing Partial Permutations`:
-    // https://medium.com/@benjamin.botto/sequentially-indexing-permutations-a-linear-algorithm-for-computing-lexicographic-rank-a22220ffd6e3
-    let nb_elements = partial_permutation.len();
-    let denom_base = factorial(nb_elements_total - nb_elements);
-    let mut product = 1;
-    let mut decimal = 0;
-    for (i, digit) in code.into_iter().rev().map(|d| d as usize).enumerate().skip(1)
+    // adds elements one after the other
+    for i in partial_permutation.iter().map(|i| *i as usize)
     {
-        product *= i;
-        // base = (nb_elements_total - 1 - i) pick (nb_elements - 1 - i)
-        //      = (nb_elements_total - 1 - i)! / (nb_elements_total - nb_elements)
-        let base = product / denom_base;
-        decimal += digit * base;
+        // gets shifted index
+        let shifted_i = shifted_indices[i];
+        // updates shift
+        for j in (i + 1)..nb_elements
+        {
+            shifted_indices[j] -= 1;
+        }
+        // updates result
+        result += base * shifted_i;
+        // updates base for next iteration
+        base *= nb_elements_left;
+        nb_elements_left -= 1;
     }
-    decimal
+
+    result
 }
 
 /// turns a decimal number into a partial permutation
-pub fn partial_permutation_from_decimal(decimal: usize,
-                                        nb_elements: usize,
-                                        nb_elements_total: usize)
+///
+/// this is the same as permutation_from_decimal but stopping early
+pub fn partial_permutation_from_decimal(mut decimal: usize,
+                                        permutation_size: usize,
+                                        nb_elements: usize)
                                         -> Vec<u8>
 {
-    // turns decimal into code
-    // https://medium.com/@benjamin.botto/sequentially-indexing-permutations-a-linear-algorithm-for-computing-lexicographic-rank-a22220ffd6e3
-    let mut code: Vec<u8> = (0..nb_elements).map(|_| 0).collect();
-    let denom_base = factorial(nb_elements_total - nb_elements);
-    let mut product = 1;
-    let mut iteration = 1;
-    for index in (0..(nb_elements - 1)).rev()
+    // the permutation we will return
+    let mut permutation: Vec<u8> = vec![0; permutation_size];
+    // represents the indices shifted after each value removal
+    let mut unshifted_indices: Vec<usize> = (0..nb_elements).collect();
+
+    // rebuild elements one after the other
+    for (i, nb_elements_left) in (1..=nb_elements).rev().take(permutation_size).enumerate()
     {
-        product *= iteration;
-        iteration += 1;
-        // base = (nb_elements_total - 1 - i) pick (nb_elements - 1 - i)
-        //      = (nb_elements_total - 1 - i)! / (nb_elements_total - nb_elements)
-        //let base = product / denom_base;
-        let divisor = (denom_base * decimal) / product; //decimal / base;
-        let remainder = divisor % iteration;
-        code[index] = remainder as u8;
+        // gets index and updates decimal
+        let shifted_i = decimal % nb_elements_left;
+        decimal /= nb_elements_left;
+        // unshifts index and update unshifting table
+        let unshifted_i = unshifted_indices[shifted_i];
+        unshifted_indices.remove(shifted_i);
+        // updates permutation
+        permutation[i] = unshifted_i as u8;
     }
 
-    // turns code into actual permutation
-    let mut sequence: Vec<u8> = (0..(nb_elements_total as u8)).collect();
-    for d in &mut code
-    {
-        *d = sequence.remove(*d as usize);
-    }
-
-    // returns the permutation
-    code
+    permutation
 }
+
+/*
+usize compile time known sizes
+*/

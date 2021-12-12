@@ -1,6 +1,5 @@
 use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
-use lehmer::Lehmer;
 use super::super::permutations::{nb_partial_permutations, decimal_from_partial_permutation,
                              partial_permutation_from_decimal};
 

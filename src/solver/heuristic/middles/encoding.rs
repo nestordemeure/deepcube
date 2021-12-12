@@ -1,6 +1,6 @@
 use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
-use lehmer::Lehmer;
+use super::super::permutations::{nb_permutations, decimal_from_permutation, permutation_from_decimal};
 
 /// used to turn a cube into a single, unique and consecutiv, middles code
 /// and back again
@@ -159,7 +159,7 @@ impl MiddleEncoder
     /// returns the number of (consecutive) middle code that can be produced by the encoder
     pub fn nb_middles_code(&self) -> usize
     {
-        (Lehmer::max_value(Self::NB_MIDDLES) + 1) * Self::NB_ORIENTATIONS.pow(Self::NB_MIDDLES as u32)
+        nb_permutations(Self::NB_MIDDLES) * Self::NB_ORIENTATIONS.pow(Self::NB_MIDDLES as u32)
     }
 
     /// takes a cube
@@ -180,8 +180,8 @@ impl MiddleEncoder
             permutation[i] = middle_index;
             total_orientation_index = total_orientation_index * Self::NB_ORIENTATIONS + orientation_index;
         }
-        let permutation_index = Lehmer::from_permutation(&permutation).to_decimal();
-        permutation_index + total_orientation_index * (Lehmer::max_value(Self::NB_MIDDLES) + 1)
+        let permutation_index = decimal_from_permutation(&permutation);
+        permutation_index + total_orientation_index * nb_permutations(Self::NB_MIDDLES)
     }
 
     /// takes a middle code
@@ -192,11 +192,11 @@ impl MiddleEncoder
     pub fn cube_of_middle_code(&self, middles_code: usize) -> Cube
     {
         // splits middles_code into both pieces of information
-        let max_permutation_index = Lehmer::max_value(Self::NB_MIDDLES) + 1;
+        let max_permutation_index = nb_permutations(Self::NB_MIDDLES);
         let permutation_index = middles_code % max_permutation_index;
         let mut total_orientation_index = middles_code / max_permutation_index;
         // rebuilds the permutation
-        let permutation = Lehmer::from_decimal(permutation_index, Self::NB_MIDDLES).to_permutation();
+        let permutation = permutation_from_decimal(permutation_index, Self::NB_MIDDLES);
         // rebuilds the cube middle per middle
         let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
         for (i, (i1, i2)) in self.middles_1D_indexes.iter().enumerate().rev()
