@@ -1,3 +1,18 @@
+/*
+One could use lehmer indices but recoding everything from scratch felt easier to deal with partial permutations correctly
+here is a recurcive version of the following algorithm for ease of understanding
+
+encoding([]) = 0
+encoding([x0]) = x0 = 0 + 1*encoding([]) (0 is the only possibility for x0)
+encoding([x0,x1]) = x1 + 2*encoding([x0])
+encoding([x0,x1,x2]) = x2 + 3*encoding([x1,x0]) = x2 + 3*(x1 + 2*x0)) = x2 + 3*x1 + 3*2*x0
+encoding(n element) is between 0 and n! excluded
+(before going to the recursive step, one should be careful to push all values below the one we just used)
+
+using a modulo one can easily reverse the operation:
+decoding(x, nb_elements) = [decoding(x/nb_elements, nb_elements-1).., x%nb_elements]
+*/
+
 /// computes the factorial of a number
 fn factorial(n: usize) -> usize
 {
@@ -18,16 +33,6 @@ pub fn nb_permutations(nb_elements: usize) -> usize
 /// turns a permutation into a decimal number
 pub fn decimal_from_permutation(permutation: &[u8]) -> usize
 {
-    /*
-    recurcive version, for ease of understanding:
-    encoding([]) = 0
-    encoding([x0]) = x0 = 0 + 1*encoding([]) (0 is the only possibility for x0)
-    encoding([x0,x1]) = x1 + 2*encoding([x0])
-    encoding([x0,x1,x2]) = x2 + 3*encoding([x1,x0]) = x2 + 3*(x1 + 2*x0)) = x2 + 3*x1 + 3*2*x0
-    encoding(n element) is between 0 and n! excluded
-    before going to the recursive step, one should be careful to push all values below the one we just used
-    */
-
     // number of elements in the permutation
     let nb_elements = permutation.len();
     // the result we will return
@@ -63,13 +68,6 @@ pub fn decimal_from_permutation(permutation: &[u8]) -> usize
 /// turns a decimal number into a partial permutation
 pub fn permutation_from_decimal(mut decimal: usize, nb_elements: usize) -> Vec<u8>
 {
-    /*
-    recurcive version, for ease of understanding:
-    encoding([x0,x1,x2]) = x2 + 3*encoding([x1,x0]) = x2 + 3*(x1 + 2*x0)) = x2 + 3*x1 + 3*2*x0
-    using a modulo one can easily reverse the operation
-    decoding(x, nb_elements) = [decoding(x/nb_elements, nb_elements-1).., x%nb_elements]
-    */
-
     // the permutation we will return
     let mut permutation: Vec<u8> = vec![0; nb_elements];
     // represents the indices shifted after each value removal
