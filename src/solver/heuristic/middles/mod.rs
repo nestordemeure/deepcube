@@ -1,3 +1,5 @@
+use progressing::{mapping::Bar, Baring};
+use stopwatch::Stopwatch;
 mod encoding;
 mod encoding_lower;
 use crate::cube::{Cube, Move};
@@ -29,9 +31,14 @@ impl MiddlesHeuristic
     {
         // builds a new encoder
         let encoder = MiddleEncoder::new();
+        let table_size = encoder.nb_middles_code();
+
+        // progress bar to track progress
+        let mut progress_bar = Bar::with_range(0, table_size);
+        let mut timer = Stopwatch::start_new();
 
         // builds a new table, full of None so far
-        let mut table: Vec<Option<u8>> = (0..encoder.nb_middles_code()).map(|_| None).collect();
+        let mut table: Vec<Option<u8>> = (0..table_size).map(|_| None).collect();
         let mut nb_states = 0;
 
         // set of all new cubes seen at the previous iteration
@@ -71,13 +78,18 @@ impl MiddlesHeuristic
             previous_cubes = new_cubes;
             nb_states += previous_cubes.len();
             // displays information on the run so far
-            println!("Middles: did distance {} ({} distinct states so far).", distance_to_solved, nb_states);
+            progress_bar.set(nb_states);
+            println!("Middles: did distance {} {} {:?}", distance_to_solved, progress_bar, timer.elapsed());
             distance_to_solved += 1;
         }
 
         // display final informations on the table
         // -2 as we both incremented the distance and had an iteration with no cubes: two useless iterations
-        println!("Middles done! (maximum distance:{} table size:{})", distance_to_solved - 2, table.len());
+        timer.stop();
+        println!("Middles done! (maximum distance:{} table size:{} computing time:{:?})",
+                 distance_to_solved - 2,
+                 table.len(),
+                 timer.elapsed());
 
         // turns options into values now that the full table should be filled
         let table = table.into_iter().map(|d| d.expect("this code has not been encountered!")).collect();
