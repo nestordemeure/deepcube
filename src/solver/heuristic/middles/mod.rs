@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use progressing::{mapping::Bar, Baring};
+use progressing::{clamping::Bar, Baring};
 use stopwatch::Stopwatch;
 mod encoding;
 mod encoding_lower;
@@ -36,7 +36,7 @@ impl MiddlesHeuristic
         let table_size = encoder.nb_middles_code();
 
         // progress bar to track progress
-        let mut progress_bar = Bar::with_range(0, table_size);
+        let mut progress_bar = Bar::new();
         let mut timer = Stopwatch::start_new();
 
         // builds a new table, full of None so far
@@ -80,8 +80,14 @@ impl MiddlesHeuristic
             previous_cubes = new_cubes;
             nb_states += previous_cubes.len();
             // displays information on the run so far
-            progress_bar.set(nb_states);
-            println!("Middles: did distance {} {} {:?}", distance_to_solved, progress_bar, timer.elapsed());
+            let progress = (nb_states * 2 - previous_cubes.len()) as f64 / (table_size * 2) as f64;
+            progress_bar.set(progress);
+            println!("Middles: did distance {} {} {}/{} states in {:?}",
+                     distance_to_solved,
+                     progress_bar,
+                     nb_states,
+                     table_size,
+                     timer.elapsed());
             distance_to_solved += 1;
         }
 
