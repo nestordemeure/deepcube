@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
 use super::super::permutations::{nb_partial_permutations, decimal_from_partial_permutation,
@@ -5,9 +6,11 @@ use super::super::permutations::{nb_partial_permutations, decimal_from_partial_p
 
 /// used to turn a cube into a single, unique and consecutiv, middles code
 /// and back again
+#[derive(Serialize, Deserialize)]
 pub struct MiddleEncoder
 {
     /// turns a pair index into a middle index and an orientation index
+    #[serde(with = "serde_arrays")]
     middle_and_orientation_of_color_pair_table: [(u8, usize); Self::NB_COLOR_PAIRS],
     /// turns a middle index and an orientation index into a pair of colors
     color_pair_of_middle_and_orientation_table: [(Color, Color); Self::NB_LEGAL_COLOR_TRIPLETS],

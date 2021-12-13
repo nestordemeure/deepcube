@@ -1,4 +1,5 @@
 //! Colors and color related operations
+use serde::{Serialize, Deserialize};
 use super::sizes::NB_FACES;
 
 //-----------------------------------------------------------------------------
@@ -8,7 +9,7 @@ use super::sizes::NB_FACES;
 pub const NB_COLORS: usize = NB_FACES;
 
 /// color of the faces of the cube
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Color
 {
     Orange = 0,

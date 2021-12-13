@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use progressing::{mapping::Bar, Baring};
 use stopwatch::Stopwatch;
 mod encoding;
@@ -7,6 +8,7 @@ use encoding::CornerEncoder;
 
 /// estimates the number of twist needed to get the corners in the correct position
 /// this is then used as a lower bound for the number of twist left before resolution
+#[derive(Serialize, Deserialize)]
 pub struct CornersHeuristic
 {
     encoder: CornerEncoder,

@@ -19,7 +19,7 @@ NA
 ## TODO
 
 - implement solving of table for heuristic
-- let the table be loaded and saved via serde
+- use compile time known sizes for permutation computations
 
 - dijskra (tested on small scramble)
 - heuristics
@@ -31,7 +31,7 @@ NA
 - implement heuristics for solvers
     - cross
     - corners
-    - wrapper to count number of calls to a given heuristic
+    - wrapper to count number of calls to a given heuristic?
 - implement solvers (sequential and parallel versions):
     - greedy (?)
     - Dijskra

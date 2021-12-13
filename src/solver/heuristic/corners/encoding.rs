@@ -1,14 +1,18 @@
+use serde::{Serialize, Deserialize};
 use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
 use super::super::permutations::{nb_permutations, decimal_from_permutation, permutation_from_decimal};
 
 /// used to turn a cube into a single, unique and consecutiv, corners code
 /// and back again
+#[derive(Serialize, Deserialize)]
 pub struct CornerEncoder
 {
     /// turns a triplet index into a corner index and an orientation index
+    #[serde(with = "serde_arrays")]
     corner_and_orientation_of_color_triplet_table: [(u8, usize); Self::NB_COLOR_TRIPLETS],
     /// turns a corner index and an orientation index into a triplet of colors
+    #[serde(with = "serde_arrays")]
     color_triplet_of_corner_and_orientation_table: [(Color, Color, Color); Self::NB_LEGAL_COLOR_TRIPLETS],
     /// 1D coordinates of the faces making each corner
     corners_1D_indexes: [(usize, usize, usize); Self::NB_CORNERS],
