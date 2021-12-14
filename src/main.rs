@@ -9,6 +9,10 @@ fn main()
     println!("Solved cube:");
     cube.display();
 
+    /*let scrambled_cube = cube.scramble(200);
+    println!("Scrambled cube:");
+    scrambled_cube.display();*/
+
     // test all rotation of the cube
     /*for axis in cube::RotationAxis::into_enum_iter()
     {

@@ -1,7 +1,8 @@
 use serde::{Serialize, Deserialize};
 use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
-use super::super::permutations::{nb_permutations, decimal_from_permutation, permutation_from_decimal};
+use super::super::permutations::{nb_partial_permutations, decimal_from_partial_permutation,
+                             partial_permutation_from_decimal};
 
 /// used to turn a cube into a single, unique and consecutiv, middles code
 /// and back again
@@ -21,6 +22,9 @@ impl MiddleEncoder
 {
     //-------------------------------------------------------------------------
     // CONSTANTS
+
+    /// number of middles that will be kept
+    const NB_MIDDLES_KEPT: usize = 6;
 
     /// number of middles
     const NB_MIDDLES: usize = 12;
@@ -45,13 +49,13 @@ impl MiddleEncoder
     {
         let i1 = c1 as usize;
         let i2 = c2 as usize;
-        i1 + Self::NB_COLORS * (i2)
+        i1 + Self::NB_COLORS * i2
     }
 
     /// turns a triplet (middle_index, orientation_index) into an index
     fn index_of_middle_orientation(middle_index: u8, orientation_index: usize) -> usize
     {
-        (middle_index as usize) + orientation_index * Self::NB_MIDDLES
+        (middle_index as usize) * Self::NB_ORIENTATIONS + orientation_index
     }
 
     /// computes a table which associate the index of a color triplet (representing a middle) with a middle index and an orientation
@@ -162,7 +166,25 @@ impl MiddleEncoder
     /// returns the number of (consecutive) middle code that can be produced by the encoder
     pub fn nb_middles_code(&self) -> usize
     {
-        nb_permutations(Self::NB_MIDDLES) * Self::NB_ORIENTATIONS.pow(Self::NB_MIDDLES as u32)
+        nb_partial_permutations(Self::NB_MIDDLES_KEPT, Self::NB_MIDDLES)
+        * Self::NB_ORIENTATIONS.pow(Self::NB_MIDDLES_KEPT as u32)
+    }
+
+    /// takes a middle index and shifts it so that it is one of the first NB_MIDDLES_KEPT indexes
+    /// (depending on whether we are keeping the first or last middles)
+    /// note that applying this transformation twice cancels it
+    fn shift_middle_index(middle_index: usize, use_lower_middles: bool) -> usize
+    {
+        if use_lower_middles
+        {
+            // keep the first NB_MIDDLES_KEPT middles
+            middle_index
+        }
+        else
+        {
+            // keep the last NB_MIDDLES_KEPT middles
+            Self::NB_MIDDLES - 1 - middle_index
+        }
     }
 
     /// takes a cube
@@ -171,20 +193,33 @@ impl MiddleEncoder
     /// converts the orientations in a single values
     /// and the coner index in a permutation in a single value
     /// combines both into a single number
-    pub fn middles_code_of_cube(&self, cube: &Cube) -> usize
+    pub fn middles_code_of_cube(&self, cube: &Cube, use_lower_middles: bool) -> usize
     {
         let mut total_orientation_index = 0;
-        let mut permutation = [0; Self::NB_MIDDLES];
+        let mut permutation = [0; Self::NB_MIDDLES_KEPT]; // (middle_index -> position_index)
         for (i, (i1, i2)) in self.middles_1D_indexes.iter().enumerate()
         {
-            let triplet_index = MiddleEncoder::index_of_color_pair(cube.squares[*i1], cube.squares[*i2]);
+            let pair_index = MiddleEncoder::index_of_color_pair(cube.squares[*i1], cube.squares[*i2]);
+            // we pass the pair if it is invalid (leftover from a partial decoding)
+            if pair_index >= Self::NB_COLOR_PAIRS
+            {
+                continue;
+            }
             let (middle_index, orientation_index) =
-                self.middle_and_orientation_of_color_pair_table[triplet_index];
-            permutation[i] = middle_index;
-            total_orientation_index = total_orientation_index * Self::NB_ORIENTATIONS + orientation_index;
+                self.middle_and_orientation_of_color_pair_table[pair_index];
+            let middle_index = middle_index as usize;
+            // we only register the middle if it is meant to be kept
+            let shifted_middle_index = Self::shift_middle_index(middle_index, use_lower_middles);
+            if shifted_middle_index < Self::NB_MIDDLES_KEPT
+            {
+                permutation[shifted_middle_index] = i as u8;
+                total_orientation_index +=
+                    orientation_index * Self::NB_ORIENTATIONS.pow(shifted_middle_index as u32);
+            }
         }
-        let permutation_index = decimal_from_permutation(&permutation);
-        permutation_index + total_orientation_index * nb_permutations(Self::NB_MIDDLES)
+        let permutation_index = decimal_from_partial_permutation(&permutation, Self::NB_MIDDLES);
+        permutation_index
+        + total_orientation_index * nb_partial_permutations(Self::NB_MIDDLES_KEPT, Self::NB_MIDDLES)
     }
 
     /// takes a middle code
@@ -192,28 +227,32 @@ impl MiddleEncoder
     /// deduces the middle index and orientation index for each middles
     /// rebuilds the corresponding colors
     /// rebuilds a cube with the proper middles
-    pub fn cube_of_middle_code(&self, middles_code: usize) -> Cube
+    pub fn cube_of_middle_code(&self, middles_code: usize, use_lower_middles: bool) -> Cube
     {
         // splits middles_code into both pieces of information
-        let max_permutation_index = nb_permutations(Self::NB_MIDDLES);
+        let max_permutation_index = nb_partial_permutations(Self::NB_MIDDLES_KEPT, Self::NB_MIDDLES);
         let permutation_index = middles_code % max_permutation_index;
         let mut total_orientation_index = middles_code / max_permutation_index;
-        // rebuilds the permutation
-        let permutation = permutation_from_decimal(permutation_index, Self::NB_MIDDLES);
+        // rebuilds the permutation (middle_index -> position_index)
+        let permutation =
+            partial_permutation_from_decimal(permutation_index, Self::NB_MIDDLES_KEPT, Self::NB_MIDDLES);
         // rebuilds the cube middle per middle
         let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
-        for (i, (i1, i2)) in self.middles_1D_indexes.iter().enumerate().rev()
+        for (middle_index, i) in permutation.iter().enumerate().rev()
         {
-            // gets middle_index and orientation_index back
-            let middle_index = permutation[i];
+            // gets the orientation back
             let orientation_index = total_orientation_index % Self::NB_ORIENTATIONS;
             total_orientation_index /= Self::NB_ORIENTATIONS;
             // gets the color back
-            let triplet_index = MiddleEncoder::index_of_middle_orientation(middle_index, orientation_index);
+            let shifted_middle_index = Self::shift_middle_index(middle_index, use_lower_middles);
+            let triplet_index =
+                MiddleEncoder::index_of_middle_orientation(shifted_middle_index as u8, orientation_index);
             let (c1, c2) = self.color_pair_of_middle_and_orientation_table[triplet_index];
+            // gets the index back
+            let (i1, i2) = self.middles_1D_indexes[*i as usize];
             // rebuilds the middle
-            squares[*i1] = c1;
-            squares[*i2] = c2;
+            squares[i1] = c1;
+            squares[i2] = c2;
         }
 
         Cube { squares }
@@ -221,5 +260,6 @@ impl MiddleEncoder
 }
 
 /*
-Do only some middles in order to preserve memory
+this implementation deal with the first NB_MIDDLES_KEPT middles
+we would need another one to deal with the last ones
 */
