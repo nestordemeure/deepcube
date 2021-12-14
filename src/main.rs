@@ -58,20 +58,20 @@ fn main()
             // generate the heuristics
             //let _corners_heuristic = CornersHeuristic::new();
             let middles_heuristic = MiddlesHeuristic::new();
-            middles_heuristic.save("../data/middles_heuristic.bin");
+            middles_heuristic.save("./data/middles_heuristic.bin");
         }
         RunType::GenerateHeuristicTables =>
         {
             // saves corners heuristics
             let corners_heuristic = CornersHeuristic::new();
-            corners_heuristic.save("../data/corners_heuristic.bin");
+            corners_heuristic.save("./data/corners_heuristic.bin");
             // saves middles heuristics
             let middles_heuristic = MiddlesHeuristic::new();
-            middles_heuristic.save("../data/middles_heuristic.bin");
+            middles_heuristic.save("./data/middles_heuristic.bin");
             // saves korf heuristics
             // built by recycling the previous two heuristics
             let korf_heuristic = KorfHeuristic { corners_heuristic, middles_heuristic };
-            korf_heuristic.save("../data/korf_heuristic.bin");
+            korf_heuristic.save("./data/korf_heuristic.bin");
         }
         RunType::SolveCube(nb_scramble) =>
         {
@@ -80,7 +80,7 @@ fn main()
             println!("Scrambled cube:");
             cube.display();
             // solves the cube
-            let heuristic = KorfHeuristic::load("../data/korf_heuristic.bin");
+            let heuristic = KorfHeuristic::load("./data/korf_heuristic.bin");
             unimplemented!("no solver has been implemented yet!");
             // displays result
             println!("Solved cube:");

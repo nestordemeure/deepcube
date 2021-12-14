@@ -18,13 +18,12 @@ The heuristic precomputations would be easy to paralelize but this increase memo
 
 - heuristics:
     - corners precomputed table
-
-- solvers:
+    - middles precomputed table
+    - korf heuristic (corners plus middles)
+    - ability to save and load precomputed tables on disk
+    - ability to wrap heuristics to count the number of heuristic calls
 
 ## TODO
-
-- heuristics:
-    - try the middles solver with 7 middles rather than 6
 
 - solvers:
     - Best First Search (?)
