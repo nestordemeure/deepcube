@@ -13,21 +13,16 @@ using a modulo one can easily reverse the operation:
 decoding(x, nb_elements) = [decoding(x/nb_elements, nb_elements-1).., x%nb_elements]
 */
 
-/// computes the factorial of a number
-fn factorial(n: usize) -> usize
+/// returns the number of permutations possible with the given number of elements
+pub fn nb_permutations(nb_elements: usize) -> usize
 {
+    // factorial(nb_elements)
     let mut product = 1;
-    for i in 2..(n + 1)
+    for i in 2..=nb_elements
     {
         product *= i;
     }
     product
-}
-
-/// returns the number of permutations possible with the given number of elements
-pub fn nb_permutations(nb_elements: usize) -> usize
-{
-    factorial(nb_elements)
 }
 
 /// turns a permutation into a decimal number
@@ -94,7 +89,14 @@ pub fn permutation_from_decimal(mut decimal: usize, nb_elements: usize) -> Vec<u
 /// (n pick k computation)
 pub fn nb_partial_permutations(nb_elements: usize, nb_elements_total: usize) -> usize
 {
-    factorial(nb_elements_total) / factorial(nb_elements_total - nb_elements)
+    // factorial(nb_elements_total) / factorial(nb_elements_total - nb_elements)
+    let mut product = 1;
+    let lower_nb_elements = nb_elements_total - nb_elements + 1;
+    for i in lower_nb_elements..=nb_elements_total
+    {
+        product *= i;
+    }
+    product
 }
 
 /// turns a partial permutation into a decimal number
@@ -159,7 +161,3 @@ pub fn partial_permutation_from_decimal(mut decimal: usize,
 
     permutation
 }
-
-/*
-usize compile time known sizes
-*/
