@@ -201,7 +201,7 @@ impl CornerEncoder
         let permutation_index = corners_code % max_permutation_index;
         let mut total_orientation_index = corners_code / max_permutation_index;
         // rebuilds the permutation
-        let permutation = permutation_from_decimal(permutation_index, Self::NB_CORNERS);
+        let permutation = permutation_from_decimal::<{ Self::NB_CORNERS }>(permutation_index);
         // rebuilds the cube corner per corner
         let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
         for (i, (i1, i2, i3)) in self.corners_1D_indexes.iter().enumerate().rev()

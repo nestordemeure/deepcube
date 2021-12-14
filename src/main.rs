@@ -18,7 +18,7 @@ enum RunType
 fn main()
 {
     // action to be done when running code
-    let runtype = RunType::GenerateHeuristicTables;
+    let runtype = RunType::TestRun;
 
     match runtype
     {

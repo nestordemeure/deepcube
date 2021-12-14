@@ -217,7 +217,8 @@ impl MiddleEncoder
                     orientation_index * Self::NB_ORIENTATIONS.pow(shifted_middle_index as u32);
             }
         }
-        let permutation_index = decimal_from_partial_permutation(&permutation, Self::NB_MIDDLES);
+        let permutation_index =
+            decimal_from_partial_permutation::<{ Self::NB_MIDDLES }, { Self::NB_MIDDLES_KEPT }>(&permutation);
         permutation_index
         + total_orientation_index * nb_partial_permutations(Self::NB_MIDDLES_KEPT, Self::NB_MIDDLES)
     }
@@ -235,7 +236,7 @@ impl MiddleEncoder
         let mut total_orientation_index = middles_code / max_permutation_index;
         // rebuilds the permutation (middle_index -> position_index)
         let permutation =
-            partial_permutation_from_decimal(permutation_index, Self::NB_MIDDLES_KEPT, Self::NB_MIDDLES);
+            partial_permutation_from_decimal::<{ Self::NB_MIDDLES }, { Self::NB_MIDDLES_KEPT }>(permutation_index);
         // rebuilds the cube middle per middle
         let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
         for (middle_index, i) in permutation.iter().enumerate().rev()

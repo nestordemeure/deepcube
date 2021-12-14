@@ -26,27 +26,29 @@ pub fn nb_permutations(nb_elements: usize) -> usize
 }
 
 /// turns a permutation into a decimal number
-pub fn decimal_from_permutation(permutation: &[u8]) -> usize
+pub fn decimal_from_permutation<const NB_ELEMENTS: usize>(permutation: &[u8; NB_ELEMENTS]) -> usize
 {
-    // number of elements in the permutation
-    let nb_elements = permutation.len();
     // the result we will return
     let mut result = 0;
     // represents the indices shifted after each value removal
-    let mut shifted_indices: Vec<usize> = (0..nb_elements).collect();
+    let mut shifted_indices = [0; NB_ELEMENTS];
+    for i in 0..NB_ELEMENTS
+    {
+        shifted_indices[i] = i;
+    }
     // how many elements are left to process
-    let mut nb_elements_left = nb_elements;
+    let mut nb_elements_left = NB_ELEMENTS;
     // the base by which we are multiplying
     let mut base = 1;
 
     // adds elements one after the other
     // we skip the last elements as ot will necesearily be 0
-    for i in permutation.iter().take(nb_elements - 1).map(|i| *i as usize)
+    for i in permutation.iter().take(NB_ELEMENTS - 1).map(|i| *i as usize)
     {
         // gets shifted index
         let shifted_i = shifted_indices[i];
         // updates shift
-        for j in (i + 1)..nb_elements
+        for j in (i + 1)..NB_ELEMENTS
         {
             shifted_indices[j] -= 1;
         }
@@ -61,15 +63,15 @@ pub fn decimal_from_permutation(permutation: &[u8]) -> usize
 }
 
 /// turns a decimal number into a partial permutation
-pub fn permutation_from_decimal(mut decimal: usize, nb_elements: usize) -> Vec<u8>
+pub fn permutation_from_decimal<const NB_ELEMENTS: usize>(mut decimal: usize) -> [u8; NB_ELEMENTS]
 {
     // the permutation we will return
-    let mut permutation: Vec<u8> = vec![0; nb_elements];
+    let mut permutation = [0; NB_ELEMENTS];
     // represents the indices shifted after each value removal
-    let mut unshifted_indices: Vec<usize> = (0..nb_elements).collect();
+    let mut unshifted_indices: Vec<usize> = (0..NB_ELEMENTS).collect();
 
     // rebuild elements one after the other
-    for (i, nb_elements_left) in (1..=nb_elements).rev().enumerate()
+    for (i, nb_elements_left) in (1..=NB_ELEMENTS).rev().enumerate()
     {
         // gets index and updates decimal
         let shifted_i = decimal % nb_elements_left;
@@ -102,14 +104,19 @@ pub fn nb_partial_permutations(nb_elements: usize, nb_elements_total: usize) -> 
 /// turns a partial permutation into a decimal number
 ///
 /// this function does the same thing as decimal_from_permutation but stops early
-pub fn decimal_from_partial_permutation(partial_permutation: &[u8], nb_elements: usize) -> usize
+pub fn decimal_from_partial_permutation<const NB_ELEMENTS: usize, const PERMUTATION_SIZE: usize>(partial_permutation: &[u8; PERMUTATION_SIZE])
+                                                                                                 -> usize
 {
     // the result we will return
     let mut result = 0;
     // represents the indices shifted after each value removal
-    let mut shifted_indices: Vec<usize> = (0..nb_elements).collect();
+    let mut shifted_indices = [0; NB_ELEMENTS];
+    for i in 0..NB_ELEMENTS
+    {
+        shifted_indices[i] = i;
+    }
     // how many elements are left to process
-    let mut nb_elements_left = nb_elements;
+    let mut nb_elements_left = NB_ELEMENTS;
     // the base by which we are multiplying
     let mut base = 1;
 
@@ -119,7 +126,7 @@ pub fn decimal_from_partial_permutation(partial_permutation: &[u8], nb_elements:
         // gets shifted index
         let shifted_i = shifted_indices[i];
         // updates shift
-        for j in (i + 1)..nb_elements
+        for j in (i + 1)..NB_ELEMENTS
         {
             shifted_indices[j] -= 1;
         }
@@ -136,18 +143,17 @@ pub fn decimal_from_partial_permutation(partial_permutation: &[u8], nb_elements:
 /// turns a decimal number into a partial permutation
 ///
 /// this is the same as permutation_from_decimal but stopping early
-pub fn partial_permutation_from_decimal(mut decimal: usize,
-                                        permutation_size: usize,
-                                        nb_elements: usize)
-                                        -> Vec<u8>
+pub fn partial_permutation_from_decimal<const NB_ELEMENTS: usize, const PERMUTATION_SIZE: usize>(
+    mut decimal: usize)
+    -> [u8; PERMUTATION_SIZE]
 {
     // the permutation we will return
-    let mut permutation: Vec<u8> = vec![0; permutation_size];
+    let mut permutation = [0; PERMUTATION_SIZE];
     // represents the indices shifted after each value removal
-    let mut unshifted_indices: Vec<usize> = (0..nb_elements).collect();
+    let mut unshifted_indices: Vec<usize> = (0..NB_ELEMENTS).collect();
 
     // rebuild elements one after the other
-    for (i, nb_elements_left) in (1..=nb_elements).rev().take(permutation_size).enumerate()
+    for (i, nb_elements_left) in (1..=NB_ELEMENTS).rev().take(PERMUTATION_SIZE).enumerate()
     {
         // gets index and updates decimal
         let shifted_i = decimal % nb_elements_left;
