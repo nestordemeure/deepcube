@@ -8,7 +8,7 @@ use super::sizes::NB_SQUARES_SIDE;
 impl Color
 {
     /// converts the color to a shell color for display
-    pub fn to_shell_color(&self) -> Colour
+    pub fn to_shell_color(self) -> Colour
     {
         match self
         {
@@ -26,7 +26,7 @@ impl Color
 impl Face
 {
     /// turns a face into a single letter for display purposes
-    pub fn to_single_letter_string(&self) -> String
+    pub fn to_single_letter_string(self) -> String
     {
         let letter = match self
         {

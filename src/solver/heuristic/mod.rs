@@ -1,9 +1,14 @@
 use crate::cube::Cube;
+// heuristics
 mod corners;
 pub use corners::CornersHeuristic;
 mod middles;
 pub use middles::MiddlesHeuristic;
 mod permutations;
+mod korf;
+pub use korf::KorfHeuristic;
+mod counter;
+pub use counter::CounterHeuristic;
 // for serialization
 use std::fs::File;
 use std::io::{BufWriter, BufReader};
@@ -13,7 +18,7 @@ use bincode::{serialize_into, deserialize_from};
 /// implemented by all heuristics to be used in algorithms such as A*
 pub trait Heuristic: Serialize + DeserializeOwned + Sized
 {
-    /// returns a lower bound on the number of steps before the problem will be solved
+    /// returns a lower bound on the number of move that will have to be applied before the problem will be solved
     fn optimistic_distance_to_solved(&self, cube: &Cube) -> u8;
 
     /// save the heuristic to the given file
@@ -28,5 +33,11 @@ pub trait Heuristic: Serialize + DeserializeOwned + Sized
     {
         let mut file = BufReader::new(File::create(file_name).expect("load: unable to create the file"));
         deserialize_from(&mut file).expect("load: unable to deserialize")
+    }
+
+    /// wraps the heuristic with a counter so that we can keep track of the number of heuristic calls
+    fn counter(self) -> CounterHeuristic<Self>
+    {
+        CounterHeuristic::new(self)
     }
 }
