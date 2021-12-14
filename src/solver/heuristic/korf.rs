@@ -6,8 +6,8 @@ use crate::cube::Cube;
 #[derive(Serialize, Deserialize)]
 pub struct KorfHeuristic
 {
-    corners_heuristic: CornersHeuristic,
-    middles_heuristic: MiddlesHeuristic
+    pub corners_heuristic: CornersHeuristic,
+    pub middles_heuristic: MiddlesHeuristic
 }
 
 impl Heuristic for KorfHeuristic

@@ -11,7 +11,7 @@ pub struct CounterHeuristic<H: Heuristic>
     count: AtomicUsize,
     /// wrapped heuristic
     #[serde(bound(deserialize = "H: DeserializeOwned"))]
-    heuristic: H
+    pub heuristic: H
 }
 
 impl<H: Heuristic> Heuristic for CounterHeuristic<H>

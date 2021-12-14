@@ -24,7 +24,6 @@ The heuristic precomputations would be easy to paralelize but this increase memo
 ## TODO
 
 - heuristics:
-    - middles (do lower and upper)
     - use compile time known sizes for permutation computations
     - try the middles solver with 7 middles rather than 6
 
