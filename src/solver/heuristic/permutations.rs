@@ -14,6 +14,7 @@ decoding(x, nb_elements) = [decoding(x/nb_elements, nb_elements-1).., x%nb_eleme
 */
 
 /// returns the number of permutations possible with the given number of elements
+/// NOTE: this function should be const
 pub fn nb_permutations(nb_elements: usize) -> usize
 {
     // factorial(nb_elements)
@@ -87,8 +88,8 @@ pub fn permutation_from_decimal<const NB_ELEMENTS: usize>(mut decimal: usize) ->
 }
 
 /// returns the number of permutations possible with nb_elements
-/// sampled from a larger nb_elements_total
-/// (n pick k computation)
+/// sampled from a larger nb_elements_total (n pick k computation)
+/// NOTE: this function should be const
 pub fn nb_partial_permutations(nb_elements: usize, nb_elements_total: usize) -> usize
 {
     // factorial(nb_elements_total) / factorial(nb_elements_total - nb_elements)

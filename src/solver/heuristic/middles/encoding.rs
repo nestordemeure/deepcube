@@ -24,7 +24,8 @@ impl MiddleEncoder
     // CONSTANTS
 
     /// number of middles that will be kept
-    const NB_MIDDLES_KEPT: usize = 6;
+    /// Korf recommends 6 for small tables and 7 for large ones
+    const NB_MIDDLES_KEPT: usize = 7;
 
     /// number of middles
     const NB_MIDDLES: usize = 12;
@@ -105,16 +106,16 @@ impl MiddleEncoder
     {
         // all the middle coordinates
         let coordinates = [(1, 0, 0),
+                           (0, 1, 0),
+                           (0, 0, 1),
                            (1, 2, 0),
                            (1, 0, 2),
-                           (1, 2, 2),
-                           (0, 1, 0),
                            (2, 1, 0),
                            (0, 1, 2),
-                           (2, 1, 2),
-                           (0, 0, 1),
                            (2, 0, 1),
                            (0, 2, 1),
+                           (1, 2, 2),
+                           (2, 1, 2),
                            (2, 2, 1)];
 
         // turns 3D middle coordinates into 1D faces coordinates
