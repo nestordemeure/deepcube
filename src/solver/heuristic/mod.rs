@@ -7,6 +7,8 @@ pub use middles::MiddlesHeuristic;
 mod permutations;
 mod korf;
 pub use korf::KorfHeuristic;
+mod average;
+pub use average::AverageHeuristic;
 mod counter;
 pub use counter::CounterHeuristic;
 // for serialization
@@ -31,7 +33,7 @@ pub trait Heuristic: Serialize + DeserializeOwned + Sized
     /// loads the heuristic from the given file
     fn load(file_name: &str) -> Self
     {
-        let mut file = BufReader::new(File::create(file_name).expect("load: unable to create the file"));
+        let mut file = BufReader::new(File::open(file_name).expect("load: unable to create the file"));
         deserialize_from(&mut file).expect("load: unable to deserialize")
     }
 

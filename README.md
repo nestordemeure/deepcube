@@ -45,3 +45,8 @@ The heuristic precomputations would be easy to paralelize but this increase memo
 ## References
 
 The paper [Finding Optimal Solutions to Rubik's Cube Using Pattern Databases](https://www.cs.princeton.edu/courses/archive/fall06/cos402/papers/korfrubik.pdf) by Richard Korf is *the* reference when it comes to solve Rubik's cube optimally.
+
+There is another interesting Rubik's cube implementation in rust, [Rusty-Rubik](https://github.com/esqu1/Rusty-Rubik).
+They represent the cube in term of permutations and orientations of corners and middles pieces (instead of a flat representation as we do here) which makes computing the heuristics much more efficient.
+Furthermore, they use slightly different heuristics (decoupling the permutation and orientation of middles which sounds like a good idea to do all middles at once).
+However, they implement less solvers.

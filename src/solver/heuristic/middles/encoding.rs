@@ -25,7 +25,7 @@ impl MiddleEncoder
 
     /// number of middles that will be kept
     /// Korf recommends 6 for small tables and 7 for large ones
-    const NB_MIDDLES_KEPT: usize = 7;
+    const NB_MIDDLES_KEPT: usize = 6;
 
     /// number of middles
     const NB_MIDDLES: usize = 12;

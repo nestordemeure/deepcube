@@ -12,7 +12,7 @@ use super::color::Color;
 // Move description
 
 /// all the slice of the cube that could move
-#[derive(IntoEnumIterator, Copy, Clone, Debug)]
+#[derive(IntoEnumIterator, Copy, Clone, Debug, PartialEq)]
 pub enum MoveKind
 {
     /// the face facing the solver
@@ -70,7 +70,7 @@ impl Amplitude
 }
 
 /// describes all possible moves
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct MoveDescription
 {
     pub kind: MoveKind,
@@ -143,6 +143,20 @@ impl Cube
             squares[m.apply(index)] = color;
         }
         Cube { squares }
+    }
+
+    /// applies a full path to a cube
+    /// NOTE: this operation is not designed with efficiency in mind
+    pub fn apply_path(&self, path: &[MoveDescription]) -> Cube
+    {
+        let moves = Move::all_moves();
+        let mut cube = self.clone();
+        for moveDescription in path
+        {
+            let m = moves.iter().find(|m| m.description == *moveDescription).unwrap();
+            cube = cube.apply_move(m);
+        }
+        cube
     }
 
     /// rotates the cube along the given axis

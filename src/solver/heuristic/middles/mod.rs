@@ -5,6 +5,7 @@ mod encoding;
 use crate::cube::{Cube, Move};
 use super::Heuristic;
 use encoding::MiddleEncoder;
+use crate::utils::optionu8::OptionU8;
 
 /// estimates the number of twist needed to get the Middles in the correct position
 /// this is then used as a lower bound for the number of twist left before resolution
@@ -66,17 +67,20 @@ impl MiddlesHeuristic
 
         // builds a new table, full of None so far
         let table_size = encoder.nb_middles_code();
-        let mut table: Vec<Option<u8>> = (0..table_size).map(|_| None).collect();
+        assert!(u32::try_from(table_size).is_ok(), "cannot fit table indices in 32 bits");
+        let mut table: Vec<OptionU8> = (0..table_size).map(|_| OptionU8::none()).collect();
         let mut nb_states = 0;
 
         // set of all new cubes seen at the previous iteration
         // initialized from the solved cubes
-        let mut previous_cubes: Vec<usize> =
+        let mut previous_cubes: Vec<u32> =
             Cube::all_solved_cubes().iter()
-                                    .map(|cube| encoder.middles_code_of_cube(cube, use_lower_middles))
+                                    .map(|cube| encoder.middles_code_of_cube(cube, use_lower_middles) as u32)
                                     .collect();
         // stores the first generation of results in the table
-        previous_cubes.iter().for_each(|index| table[*index] = Some(0));
+        previous_cubes.iter().for_each(|index| {
+                                 table[*index as usize].set(0);
+                             });
         nb_states += previous_cubes.len();
 
         // all moves
@@ -87,28 +91,52 @@ impl MiddlesHeuristic
         // run until we cannot find new Middles
         while !previous_cubes.is_empty()
         {
-            // turns old Middles into new Middles
-            let new_cubes =
+            // turns old middles into new middles
+            /*let new_cubes =
                 previous_cubes.into_iter()
-                              .map(|code| encoder.cube_of_middle_code(code, use_lower_middles))
+                              .map(|code| encoder.cube_of_middle_code(code as usize, use_lower_middles))
                               .flat_map(|cube| moves.iter().map(move |m| cube.apply_move(m)))
                               .map(|cube_child| encoder.middles_code_of_cube(&cube_child, use_lower_middles))
-                              .filter(|code_child| {
-                                  let result = &mut table[*code_child];
-                                  match result
-                                  {
-                                      None =>
-                                      {
-                                          *result = Some(distance_to_solved);
-                                          true
-                                      }
-                                      Some(_) => false
-                                  }
-                              })
+                              .filter(|code_child| table[*code_child].set(distance_to_solved))
+                              .map(|code_child| code_child as u32)
                               .collect();
-            previous_cubes = new_cubes;
-            nb_states += previous_cubes.len();
+            previous_cubes = new_cubes;*/
+            // the loop is done in place to minimize memory use
+            let mut i = 0;
+            let mut nb_old_cubes = previous_cubes.len();
+            let mut nb_new_cubes = 0;
+            while i < nb_old_cubes
+            {
+                // gets the current cube
+                let code = previous_cubes[i];
+                let cube = encoder.cube_of_middle_code(code as usize, use_lower_middles);
+                // pushes its child at the end of the vector
+                for cube_child in moves.iter().map(move |m| cube.apply_move(m))
+                {
+                    let code_child = encoder.middles_code_of_cube(&cube_child, use_lower_middles);
+                    if table[code_child].set(distance_to_solved)
+                    {
+                        previous_cubes.push(code_child as u32);
+                        nb_new_cubes += 1;
+                    }
+                }
+                // removes the current cube
+                previous_cubes.swap_remove(i);
+                // udpate the indices
+                if nb_new_cubes > 0
+                {
+                    // if the cube was replaced by a new cube, we can go forward into older cubes
+                    nb_new_cubes -= 1;
+                    i += 1;
+                }
+                else
+                {
+                    // if it wasn't, we stay in place and read a previous cube
+                    nb_old_cubes -= 1;
+                }
+            }
             // displays information on the run so far
+            nb_states += previous_cubes.len();
             let progress = (nb_states * 2 - previous_cubes.len()) as f64 / (table_size * 2) as f64;
             progress_bar.set(progress);
             println!("Middles: did distance {} {} {}/{} states in {:?}",
@@ -129,6 +157,6 @@ impl MiddlesHeuristic
                  timer.elapsed());
 
         // turns options into values now that the full table should be filled
-        table.into_iter().map(|d| d.expect("this code has not been encountered!")).collect()
+        table.into_iter().map(|d| d.unwrap()).collect()
     }
 }

@@ -1,8 +1,12 @@
 #![allow(dead_code, non_snake_case)]
-
+mod utils;
 mod cube;
 mod solver;
 pub use crate::solver::heuristic::{Heuristic, KorfHeuristic, MiddlesHeuristic, CornersHeuristic};
+
+// sets the allocator to jemalloc
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 /// describes the various type of run that could happen
 enum RunType
@@ -18,7 +22,7 @@ enum RunType
 fn main()
 {
     // action to be done when running code
-    let runtype = RunType::TestRun;
+    let runtype = RunType::SolveCube(3);
 
     match runtype
     {
@@ -70,6 +74,8 @@ fn main()
             middles_heuristic.save("./data/middles_heuristic.bin");
             // saves korf heuristics
             // built by recycling the previous two heuristics
+            //let corners_heuristic = CornersHeuristic::load("./data/corners_heuristic.bin");
+            //let middles_heuristic = MiddlesHeuristic::load("./data/middles_heuristic.bin");
             let korf_heuristic = KorfHeuristic { corners_heuristic, middles_heuristic };
             korf_heuristic.save("./data/korf_heuristic.bin");
         }
@@ -81,7 +87,8 @@ fn main()
             cube.display();
             // solves the cube
             let heuristic = KorfHeuristic::load("./data/korf_heuristic.bin");
-            unimplemented!("no solver has been implemented yet!");
+            let path = cube.solve_breath_first_search();
+            let cube = cube.apply_path(&path);
             // displays result
             println!("Solved cube:");
             cube.display();

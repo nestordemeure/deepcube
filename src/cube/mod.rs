@@ -3,7 +3,7 @@ use enum_iterator::IntoEnumIterator;
 use rand::seq::SliceRandom;
 pub mod sizes;
 pub mod color;
-mod moves;
+pub mod moves;
 pub mod coordinates;
 mod display;
 pub use color::{Color, NB_COLORS};

@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+jemallocator = "0.3.2"
 enum-iterator = "0.7.0"
 rand = "0.8.4"
 ansi_term = "0.12.1"
@@ -15,3 +16,9 @@ stopwatch = "0.0.7"
 serde = { version = "1.0.131", features = ["derive"]}
 serde_arrays = "0.1.0"
 bincode = "1.3.3"
+
+[profile.release]
+# https://nnethercote.github.io/perf-book/build-configuration.html
+lto = true
+codegen-units = 1
+panic = "abort"
