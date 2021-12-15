@@ -22,7 +22,7 @@ enum RunType
 fn main()
 {
     // action to be done when running code
-    let runtype = RunType::SolveCube(3);
+    let runtype = RunType::SolveCube(7);
 
     match runtype
     {

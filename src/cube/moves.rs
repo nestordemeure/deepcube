@@ -43,6 +43,27 @@ impl MoveKind
     }
 }
 
+impl std::fmt::Display for MoveKind
+{
+    /// print a MoveKind as a single letter
+    fn fmt(&self, formater: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        let c = match self
+        {
+            MoveKind::Front => 'F',
+            MoveKind::Back => 'B',
+            MoveKind::Right => 'R',
+            MoveKind::Left => 'L',
+            MoveKind::Up => 'U',
+            MoveKind::Down => 'D',
+            MoveKind::Middle => 'M',
+            MoveKind::Equator => 'E',
+            MoveKind::Side => 'S'
+        };
+        write!(formater, "{}", c)
+    }
+}
+
 /// all possible amplitudes for a move
 #[derive(IntoEnumIterator, Copy, Clone, PartialEq, Debug)]
 pub enum Amplitude
@@ -70,11 +91,20 @@ impl Amplitude
 }
 
 /// describes all possible moves
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct MoveDescription
 {
     pub kind: MoveKind,
     pub amplitude: Amplitude
+}
+
+impl std::fmt::Debug for MoveDescription
+{
+    /// displays a move description in standard format
+    fn fmt(&self, formater: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        write!(formater, "{}{}", self.kind, self.amplitude.nb_rotations())
+    }
 }
 
 //-----------------------------------------------------------------------------
