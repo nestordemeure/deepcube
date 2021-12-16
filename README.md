@@ -27,8 +27,12 @@ The heuristic precomputations would be easy to paralelize but this increase memo
     - best first search
     - breath first search
     - iterative deepening
+    - IDA*
 
 ## TODO
+
+apparently my korf heuristic is not optimistic, there is probably a bug somewhere...
+(can be check by running both the heuristic and a solver to see if the heuristic's value is always lower)
 
 - cube:
     - add function producing the worst cube possible (solve in 20 moves)
@@ -42,12 +46,13 @@ The heuristic precomputations would be easy to paralelize but this increase memo
         - use it as an imperfect heuristic
 
 - solvers:
+    - IDA*:
+        - deal with fact that length of path might be longer than actual length of solution
     - best first search
         - introduce random tie-break in minimum to avoid loops
     - breath first search
         - modify vector in place to decrease memory use
         - check for solve *when creating a child* in order to gain one level of depth with no additional memory use
-    - IDA*
     - A*
     - Recursive Best First Search
     - my own solver
@@ -55,8 +60,6 @@ The heuristic precomputations would be easy to paralelize but this increase memo
         - guided by a weighted sum
         - guided by a neural network?
     - some tests to check that all algorithm find optimal solutions with the same number of moves?
-
-
 
 ## References
 
@@ -66,3 +69,6 @@ There is another interesting Rubik's cube implementation in rust, [Rusty-Rubik](
 They represent the cube in term of permutations and orientations of corners and middles pieces (instead of a flat representation as we do here) which makes computing the heuristics much more efficient.
 Furthermore, they use slightly different heuristics (decoupling the permutation and orientation of middles which sounds like a good idea to do all middles at once).
 However, they implement less solvers.
+
+[deepCubeA](https://github.com/forestagostinelli/DeepCubeA) is a machine learning project using deep learnign and reinforcement learning to design a neural network able to solve a Rubik's cube.
+However, while their network manages to solve 100% of Rubik's cube they tested, they do not aim for optimal solutions (they found that about 60% of the solution suggested by the network were optimal).

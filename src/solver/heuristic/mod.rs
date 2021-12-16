@@ -1,10 +1,7 @@
 use crate::cube::Cube;
 // heuristics
-mod corners;
-pub use corners::CornersHeuristic;
-mod middles;
-pub use middles::MiddlesHeuristic;
-mod permutations;
+mod table;
+pub use table::{CornerHeuristic, LowerMiddleHeuristic, UpperMiddleHeuristic};
 mod korf;
 pub use korf::KorfHeuristic;
 mod average;

@@ -2,6 +2,7 @@ use serde::{Serialize, Deserialize};
 use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
 use super::super::permutations::{nb_permutations, decimal_from_permutation, permutation_from_decimal};
+use super::Encoder;
 
 /// used to turn a cube into a single, unique and consecutiv, corners code
 /// and back again
@@ -18,6 +19,86 @@ pub struct CornerEncoder
     corners_1D_indexes: [(usize, usize, usize); Self::NB_CORNERS],
     /// whether each corner is a top corner or a bottom corner
     corners_is_top: [bool; Self::NB_CORNERS]
+}
+
+impl Encoder for CornerEncoder
+{
+    /// initializes the encoder
+    fn new() -> Self
+    {
+        let (corner_and_orientation_of_color_triplet_table, color_triplet_of_corner_and_orientation_table) =
+            CornerEncoder::compute_tables();
+        let (corners_1D_indexes, corners_is_top) = CornerEncoder::compute_corners_1D_indexes();
+        CornerEncoder { corner_and_orientation_of_color_triplet_table,
+                        color_triplet_of_corner_and_orientation_table,
+                        corners_1D_indexes,
+                        corners_is_top }
+    }
+
+    /// size of the array in which to put the indexes
+    fn nb_indexes() -> usize
+    {
+        nb_permutations(Self::NB_CORNERS) * Self::NB_ORIENTATIONS.pow(Self::NB_CORNERS as u32)
+    }
+
+    /// takes a cube
+    /// gets all of its corners
+    /// turn them into pairs (corner index, orientation index)
+    /// converts the orientations in a single values
+    /// and the coner index in a permutation in a single value
+    /// combines both into a single number
+    fn encode(&self, cube: &Cube) -> usize
+    {
+        let mut total_orientation_index = 0;
+        let mut permutation = [0; Self::NB_CORNERS];
+        for (i, (i1, i2, i3)) in self.corners_1D_indexes.iter().enumerate()
+        {
+            let triplet_index = CornerEncoder::index_of_color_triplet(cube.squares[*i1],
+                                                                      cube.squares[*i2],
+                                                                      cube.squares[*i3]);
+            let (corner_index, orientation_index) =
+                self.corner_and_orientation_of_color_triplet_table[triplet_index];
+            permutation[i] = corner_index;
+            total_orientation_index = total_orientation_index * Self::NB_ORIENTATIONS + orientation_index;
+        }
+        let permutation_index = decimal_from_permutation(&permutation);
+        permutation_index + total_orientation_index * nb_permutations(Self::NB_CORNERS)
+    }
+
+    /// takes a corner code
+    /// split it into permutation_index and orientation_index
+    /// deduces the corner index and orientation index for each corners
+    /// rebuilds the corresponding colors
+    /// rebuilds a cube with the proper corners
+    fn decode(&self, corners_code: usize) -> Cube
+    {
+        // splits corners_code into both pieces of information
+        let max_permutation_index = nb_permutations(Self::NB_CORNERS);
+        let permutation_index = corners_code % max_permutation_index;
+        let mut total_orientation_index = corners_code / max_permutation_index;
+        // rebuilds the permutation
+        let permutation = permutation_from_decimal::<{ Self::NB_CORNERS }>(permutation_index);
+        // rebuilds the cube corner per corner
+        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
+        for (i, (i1, i2, i3)) in self.corners_1D_indexes.iter().enumerate().rev()
+        {
+            // gets corner_index, orientation_index and is_top back
+            let corner_index = permutation[i];
+            let orientation_index = total_orientation_index % Self::NB_ORIENTATIONS;
+            total_orientation_index /= Self::NB_ORIENTATIONS;
+            let is_top = self.corners_is_top[i];
+            // gets the color back
+            let triplet_index =
+                CornerEncoder::index_of_corner_orientation(corner_index, orientation_index, is_top);
+            let (c1, c2, c3) = self.color_triplet_of_corner_and_orientation_table[triplet_index];
+            // rebuilds the corner
+            squares[*i1] = c1;
+            squares[*i2] = c2;
+            squares[*i3] = c3;
+        }
+
+        Cube { squares }
+    }
 }
 
 impl CornerEncoder
@@ -142,85 +223,5 @@ impl CornerEncoder
         }
 
         (corners_coordinates, is_top)
-    }
-
-    //-------------------------------------------------------------------------
-    // ENCODER
-
-    /// creates a new CornerEncoder
-    pub fn new() -> CornerEncoder
-    {
-        let (corner_and_orientation_of_color_triplet_table, color_triplet_of_corner_and_orientation_table) =
-            CornerEncoder::compute_tables();
-        let (corners_1D_indexes, corners_is_top) = CornerEncoder::compute_corners_1D_indexes();
-        CornerEncoder { corner_and_orientation_of_color_triplet_table,
-                        color_triplet_of_corner_and_orientation_table,
-                        corners_1D_indexes,
-                        corners_is_top }
-    }
-
-    /// returns the number of (consecutive) corner code that can be produced by the encoder
-    pub fn nb_corners_code(&self) -> usize
-    {
-        nb_permutations(Self::NB_CORNERS) * Self::NB_ORIENTATIONS.pow(Self::NB_CORNERS as u32)
-    }
-
-    /// takes a cube
-    /// gets all of its corners
-    /// turn them into pairs (corner index, orientation index)
-    /// converts the orientations in a single values
-    /// and the coner index in a permutation in a single value
-    /// combines both into a single number
-    pub fn corners_code_of_cube(&self, cube: &Cube) -> usize
-    {
-        let mut total_orientation_index = 0;
-        let mut permutation = [0; Self::NB_CORNERS];
-        for (i, (i1, i2, i3)) in self.corners_1D_indexes.iter().enumerate()
-        {
-            let triplet_index = CornerEncoder::index_of_color_triplet(cube.squares[*i1],
-                                                                      cube.squares[*i2],
-                                                                      cube.squares[*i3]);
-            let (corner_index, orientation_index) =
-                self.corner_and_orientation_of_color_triplet_table[triplet_index];
-            permutation[i] = corner_index;
-            total_orientation_index = total_orientation_index * Self::NB_ORIENTATIONS + orientation_index;
-        }
-        let permutation_index = decimal_from_permutation(&permutation);
-        permutation_index + total_orientation_index * nb_permutations(Self::NB_CORNERS)
-    }
-
-    /// takes a corner code
-    /// split it into permutation_index and orientation_index
-    /// deduces the corner index and orientation index for each corners
-    /// rebuilds the corresponding colors
-    /// rebuilds a cube with the proper corners
-    pub fn cube_of_corner_code(&self, corners_code: usize) -> Cube
-    {
-        // splits corners_code into both pieces of information
-        let max_permutation_index = nb_permutations(Self::NB_CORNERS);
-        let permutation_index = corners_code % max_permutation_index;
-        let mut total_orientation_index = corners_code / max_permutation_index;
-        // rebuilds the permutation
-        let permutation = permutation_from_decimal::<{ Self::NB_CORNERS }>(permutation_index);
-        // rebuilds the cube corner per corner
-        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
-        for (i, (i1, i2, i3)) in self.corners_1D_indexes.iter().enumerate().rev()
-        {
-            // gets corner_index, orientation_index and is_top back
-            let corner_index = permutation[i];
-            let orientation_index = total_orientation_index % Self::NB_ORIENTATIONS;
-            total_orientation_index /= Self::NB_ORIENTATIONS;
-            let is_top = self.corners_is_top[i];
-            // gets the color back
-            let triplet_index =
-                CornerEncoder::index_of_corner_orientation(corner_index, orientation_index, is_top);
-            let (c1, c2, c3) = self.color_triplet_of_corner_and_orientation_table[triplet_index];
-            // rebuilds the corner
-            squares[*i1] = c1;
-            squares[*i2] = c2;
-            squares[*i3] = c3;
-        }
-
-        Cube { squares }
     }
 }

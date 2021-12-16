@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use super::{Heuristic, MiddlesHeuristic, CornersHeuristic};
+use super::{Heuristic, UpperMiddleHeuristic, LowerMiddleHeuristic, CornerHeuristic};
 use crate::cube::Cube;
 
 /// does an average of the middle and corner heuristics (rounded up)
@@ -7,8 +7,9 @@ use crate::cube::Cube;
 #[derive(Serialize, Deserialize)]
 pub struct AverageHeuristic
 {
-    pub corners_heuristic: CornersHeuristic,
-    pub middles_heuristic: MiddlesHeuristic
+    pub corners_heuristic: CornerHeuristic,
+    pub lower_middles_heuristic: LowerMiddleHeuristic,
+    pub upper_middles_heuristic: UpperMiddleHeuristic
 }
 
 impl Heuristic for AverageHeuristic
@@ -18,11 +19,11 @@ impl Heuristic for AverageHeuristic
     {
         // computes the individual heuristics
         let corners_distance = self.corners_heuristic.optimistic_distance_to_solved(cube);
-        let middles_distance_lower = self.middles_heuristic.optimistic_distance_to_solved_lower(cube);
-        let middles_distance_upper = self.middles_heuristic.optimistic_distance_to_solved_upper(cube);
+        let lower_middles_distance = self.lower_middles_heuristic.optimistic_distance_to_solved(cube);
+        let upper_middles_distance = self.upper_middles_heuristic.optimistic_distance_to_solved(cube);
         // assemble the heuristics
         // we use usize to avoid overflows here
-        let sum_distances = corners_distance + middles_distance_lower + middles_distance_upper;
+        let sum_distances = corners_distance + lower_middles_distance + upper_middles_distance;
         //let average_ceil = (sum_distances + 2) / 3;
         //average_ceil
         sum_distances
@@ -34,8 +35,9 @@ impl AverageHeuristic
     /// initialize the heuristic
     pub fn new() -> AverageHeuristic
     {
-        let corners_heuristic = CornersHeuristic::new();
-        let middles_heuristic = MiddlesHeuristic::new();
-        AverageHeuristic { corners_heuristic, middles_heuristic }
+        let corners_heuristic = CornerHeuristic::new();
+        let lower_middles_heuristic = LowerMiddleHeuristic::new();
+        let upper_middles_heuristic = UpperMiddleHeuristic::new();
+        AverageHeuristic { corners_heuristic, lower_middles_heuristic, upper_middles_heuristic }
     }
 }

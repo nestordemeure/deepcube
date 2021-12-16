@@ -58,6 +58,7 @@ impl Cube
         let mut nb_cube_expanded = 0;
         // all moves that can be applied to a cube
         let moves = Move::all_moves();
+        let dummy_move = MoveDescription { kind: MoveKind::Front, amplitude: Amplitude::Clockwise };
 
         let mut path = Vec::new();
         for target_depth in 0..
@@ -86,7 +87,7 @@ impl Cube
                 // display information on the run
                 println!("Iterative deepening: did distance {} in {:?} ({} cubes expanded / 0 heuristic call)", target_depth, timer.elapsed(), nb_cube_expanded);
                 // increases the size of the path for the next iteration
-                path.push(MoveDescription { kind: MoveKind::Front, amplitude: Amplitude::Clockwise });
+                path.push(dummy_move);
             }
         }
         // notes that there is a solution

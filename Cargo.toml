@@ -16,6 +16,7 @@ stopwatch = "0.0.7"
 serde = { version = "1.0.131", features = ["derive"]}
 serde_arrays = "0.1.0"
 bincode = "1.3.3"
+priority-queue = "1.2.1"
 
 [profile.release]
 # https://nnethercote.github.io/perf-book/build-configuration.html
