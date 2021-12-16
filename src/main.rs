@@ -22,7 +22,7 @@ enum RunType
 fn main()
 {
     // action to be done when running code
-    let runtype = RunType::GenerateHeuristicTables; //SolveCube(7);
+    let runtype = RunType::SolveCube(7);
 
     match runtype
     {
@@ -33,8 +33,8 @@ fn main()
             println!("Scrambled cube:");
             cube.display();
             // gets an heuristic
-            //let heuristic = KorfHeuristic::load("./data/korf_heuristic.bin");
-            let heuristic = AverageHeuristic::load("./data/average_heuristic.bin");
+            let heuristic = KorfHeuristic::load("./data/korf_heuristic.bin");
+            //let heuristic = AverageHeuristic::load("./data/average_heuristic.bin");
             // solves the cube
             //let path = cube.solve_breath_first_search();
             //let path = cube.solve_iterative_deepening();
@@ -51,13 +51,15 @@ fn main()
             //corners_heuristic.save("./data/corners_heuristic.bin");
             let corners_heuristic = CornersHeuristic::load("./data/corners_heuristic.bin");
             // saves middles heuristics
-            let middles_heuristic = MiddlesHeuristic::new();
-            middles_heuristic.save("./data/middles_heuristic.bin");
+            //let middles_heuristic = MiddlesHeuristic::new();
+            //middles_heuristic.save("./data/middles_heuristic.bin");
+            let middles_heuristic = MiddlesHeuristic::load("./data/middles_heuristic.bin");
             // saves korf heuristics
             // built by recycling the previous two heuristics
-            //let middles_heuristic = MiddlesHeuristic::load("./data/middles_heuristic.bin");
-            let korf_heuristic = KorfHeuristic { corners_heuristic, middles_heuristic };
-            korf_heuristic.save("./data/korf_heuristic.bin");
+            //let korf_heuristic = KorfHeuristic { corners_heuristic, middles_heuristic };
+            //korf_heuristic.save("./data/korf_heuristic.bin");
+            let average_heuristic = AverageHeuristic { corners_heuristic, middles_heuristic };
+            average_heuristic.save("./data/average_heuristic.bin");
         }
         RunType::TestRun =>
         {
