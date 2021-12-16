@@ -38,8 +38,9 @@ apparently my korf heuristic is not optimistic, there is probably a bug somewher
     - add function producing the worst cube possible (solve in 20 moves)
 
 - heuristics:
+    - paralelize heuristic generation
     - take corner and middle heuristic as input for larger ones
-    - introduce operation to end early when there is a lower bound
+    - introduce operation to end early when there is a lower bound?
     - neural networks:
         - collect data
         - train network

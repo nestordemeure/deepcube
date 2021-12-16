@@ -51,7 +51,7 @@ fn main()
             // saves corners heuristics
             let corners_heuristic = CornerHeuristic::new();
             corners_heuristic.save("./data/corners_heuristic.bin");
-            //let corners_heuristic = CornerHeuristic::load("./data/corners_heuristic.bin");
+            let corners_heuristic = CornerHeuristic::load("./data/corners_heuristic.bin");
             // saves lower middles heuristics
             let lower_middles_heuristic = LowerMiddleHeuristic::new();
             lower_middles_heuristic.save("./data/lower_middles_heuristic.bin");

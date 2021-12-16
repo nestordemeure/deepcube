@@ -41,23 +41,24 @@ impl<E: Encoder> TableHeuristic<E>
         let mut table = vec![None; table_size];
 
         // progress bar to track progress
-        let mut progress_bar = Bar::with_range(0, table_size);
+        let mut progress_bar = Bar::with_range(0, table_size).timed();
         let mut timer = Stopwatch::start_new();
 
         // uses an iterative deepening search to fill the table
         let solved_cubes = Cube::all_solved_cubes();
         let moves = Move::all_moves();
         let mut current_table_size = 0;
+        // depth left when exploring the various cubes
+        let mut depth_cubes = vec![-1; table_size];
         for depth in 0..
         {
             // iterates at the given depth from all solved cubes
             let mut nb_new_cubes = 0;
-            let mut known_cubes = vec![false; table_size];
             for cube in solved_cubes.iter()
             {
                 Self::iterative_deepening(cube,
                                           &moves,
-                                          &mut known_cubes,
+                                          &mut depth_cubes,
                                           &mut table,
                                           &mut nb_new_cubes,
                                           &encoder,
@@ -95,21 +96,20 @@ impl<E: Encoder> TableHeuristic<E>
     /// registers all new cubes at depth max_depth
     fn iterative_deepening(cube: &Cube,
                            moves: &[Move],
-                           known_cubes: &mut [bool],
+                           depth_cubes: &mut [i8],
                            table: &mut [Option<u8>],
                            nb_new_cubes: &mut usize,
                            encoder: &E,
                            depth: u8,
                            max_depth: u8)
     {
-        // avoids running code on known cubes
+        // avoids running code on cubes whose children are all known
         let index = encoder.encode(cube);
-        //println!("index: {}", index);
-        let is_known = known_cubes[index];
-        if !is_known
+        let depth_left = (max_depth - depth) as i8;
+        if depth_cubes[index] < depth_left
         {
             // registers cube
-            known_cubes[index] = true;
+            depth_cubes[index] = depth_left;
 
             if depth == max_depth
             {
@@ -128,7 +128,7 @@ impl<E: Encoder> TableHeuristic<E>
                     let child_cube = cube.apply_move(m);
                     Self::iterative_deepening(&child_cube,
                                               moves,
-                                              known_cubes,
+                                              depth_cubes,
                                               table,
                                               nb_new_cubes,
                                               encoder,
@@ -147,8 +147,3 @@ impl<E: Encoder> Default for TableHeuristic<E>
         Self::new()
     }
 }
-
-/*
-the known cube mecanism results in having less cubes per depth that we should
-one explaination could be non-injectivity of the encoder function
-*/
