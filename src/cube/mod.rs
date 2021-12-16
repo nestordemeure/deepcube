@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use enum_iterator::IntoEnumIterator;
 use rand::seq::SliceRandom;
 pub mod sizes;
@@ -15,7 +15,7 @@ pub use coordinates::{Face, Coordinate1D, Coordinate2D, RotationAxis};
 // Cube
 
 /// A Rubik's cube stored as a flat array of colors
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Cube
 {
     pub squares: [Color; NB_SQUARES_CUBE]
@@ -49,7 +49,7 @@ impl Cube
     pub fn all_solved_cubes() -> Vec<Cube>
     {
         let mut cubes = vec![Cube::solved()];
-        let mut result = HashSet::new();
+        let mut result = BTreeSet::new();
 
         while !cubes.is_empty()
         {

@@ -70,7 +70,7 @@ impl<E: Encoder> TableHeuristic<E>
             {
                 // display final informations on the table
                 timer.stop();
-                println!("Corners done! (maximum distance:{} table size:{} computing time:{:?})",
+                println!("Table done! (maximum distance:{} table size:{} computing time:{:?})",
                          depth,
                          table_size,
                          timer.elapsed());
@@ -81,12 +81,7 @@ impl<E: Encoder> TableHeuristic<E>
                 // displays information on the current depth
                 current_table_size += nb_new_cubes;
                 progress_bar.set(current_table_size);
-                println!("Table: did distance {} {} {}/{} states in {:?}",
-                         depth,
-                         progress_bar,
-                         current_table_size,
-                         table_size,
-                         timer.elapsed());
+                println!("Table: did distance {} {} in {:?}", depth, progress_bar, timer.elapsed());
             }
         }
 
@@ -109,6 +104,7 @@ impl<E: Encoder> TableHeuristic<E>
     {
         // avoids running code on known cubes
         let index = encoder.encode(cube);
+        //println!("index: {}", index);
         let is_known = known_cubes[index];
         if !is_known
         {
@@ -117,7 +113,7 @@ impl<E: Encoder> TableHeuristic<E>
 
             if depth == max_depth
             {
-                // we are at the depth limit, registers the cube
+                // we are at the depth limit, registers the depth
                 if table[index].is_none()
                 {
                     table[index] = Some(depth);
@@ -154,6 +150,5 @@ impl<E: Encoder> Default for TableHeuristic<E>
 
 /*
 the known cube mecanism results in having less cubes per depth that we should
-also that number *changes* from one iteration to the next
-one explaination could be non-injectivity or the encoder function (it does not explain the non determinism)
+one explaination could be non-injectivity of the encoder function
 */
