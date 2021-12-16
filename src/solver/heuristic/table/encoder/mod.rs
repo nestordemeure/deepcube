@@ -17,10 +17,4 @@ pub trait Encoder: Serialize + DeserializeOwned + Sized
 
     /// encodes a cube as an index
     fn encode(&self, cube: &Cube) -> usize;
-
-    /// Optional: decodes an index into a cube
-    fn decode(&self, _code: usize) -> Cube
-    {
-        unimplemented!("There is no decode operation implemented for this Heuristic!")
-    }
 }

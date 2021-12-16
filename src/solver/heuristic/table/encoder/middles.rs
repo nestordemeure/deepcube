@@ -89,42 +89,6 @@ impl<const USE_LOWER_MIDDLES: bool> Encoder for MiddleEncoder<USE_LOWER_MIDDLES>
             decimal_from_partial_permutation::<{ NB_MIDDLES }, { NB_MIDDLES_KEPT }>(&permutation);
         permutation_index + total_orientation_index * nb_partial_permutations(NB_MIDDLES_KEPT, NB_MIDDLES)
     }
-
-    /// takes a middle code
-    /// split it into permutation_index and orientation_index
-    /// deduces the middle index and orientation index for each middles
-    /// rebuilds the corresponding colors
-    /// rebuilds a cube with the proper middles
-    fn decode(&self, middles_code: usize) -> Cube
-    {
-        // splits middles_code into both pieces of information
-        let max_permutation_index = nb_partial_permutations(NB_MIDDLES_KEPT, NB_MIDDLES);
-        let permutation_index = middles_code % max_permutation_index;
-        let mut total_orientation_index = middles_code / max_permutation_index;
-        // rebuilds the permutation (middle_index -> position_index)
-        let permutation =
-            partial_permutation_from_decimal::<{ NB_MIDDLES }, { NB_MIDDLES_KEPT }>(permutation_index);
-        // rebuilds the cube middle per middle
-        let mut squares = [Color::Invalid; NB_SQUARES_CUBE];
-        for (middle_index, i) in permutation.iter().enumerate().rev()
-        {
-            // gets the orientation back
-            let orientation_index = total_orientation_index % NB_ORIENTATIONS;
-            total_orientation_index /= NB_ORIENTATIONS;
-            // gets the color back
-            let shifted_middle_index = Self::shift_middle_index(middle_index);
-            let triplet_index =
-                Self::index_of_middle_orientation(shifted_middle_index as u8, orientation_index);
-            let (c1, c2) = self.color_pair_of_middle_and_orientation_table[triplet_index];
-            // gets the index back
-            let (i1, i2) = self.middles_1D_indexes[*i as usize];
-            // rebuilds the middle
-            squares[i1] = c1;
-            squares[i2] = c2;
-        }
-
-        Cube { squares }
-    }
 }
 
 impl<const USE_LOWER_MIDDLES: bool> MiddleEncoder<USE_LOWER_MIDDLES>
