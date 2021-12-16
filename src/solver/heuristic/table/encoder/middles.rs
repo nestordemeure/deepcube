@@ -1,8 +1,7 @@
 use serde::{Serialize, Deserialize};
-use crate::cube::{Cube, Color, NB_FACES, NB_SQUARES_CUBE};
+use crate::cube::{Cube, Color, NB_FACES};
 use crate::cube::coordinates::{Coordinate3D, RotationAxis};
-use super::super::permutations::{nb_partial_permutations, decimal_from_partial_permutation,
-                             partial_permutation_from_decimal};
+use super::super::permutations::{nb_partial_permutations, decimal_from_partial_permutation};
 use super::Encoder;
 
 //-------------------------------------------------------------------------
@@ -30,8 +29,6 @@ pub struct MiddleEncoder<const USE_LOWER_MIDDLES: bool>
     /// turns a pair index into a middle index and an orientation index
     #[serde(with = "serde_arrays")]
     middle_and_orientation_of_color_pair_table: [(u8, usize); NB_COLOR_PAIRS],
-    /// turns a middle index and an orientation index into a pair of colors
-    color_pair_of_middle_and_orientation_table: [(Color, Color); NB_LEGAL_COLOR_TRIPLETS],
     /// 1D coordinates of the faces making each middle
     middles_1D_indexes: [(usize, usize); NB_MIDDLES]
 }
@@ -41,12 +38,9 @@ impl<const USE_LOWER_MIDDLES: bool> Encoder for MiddleEncoder<USE_LOWER_MIDDLES>
     /// initializes the encoder
     fn new() -> Self
     {
-        let (middle_and_orientation_of_color_pair_table, color_pair_of_middle_and_orientation_table) =
-            Self::compute_tables();
+        let middle_and_orientation_of_color_pair_table = Self::compute_table_middle_of_pair();
         let middles_1D_indexes = Self::compute_middles_1D_indexes();
-        MiddleEncoder { middle_and_orientation_of_color_pair_table,
-                        color_pair_of_middle_and_orientation_table,
-                        middles_1D_indexes }
+        MiddleEncoder { middle_and_orientation_of_color_pair_table, middles_1D_indexes }
     }
 
     /// size of the array in which to put the indexes
@@ -104,14 +98,8 @@ impl<const USE_LOWER_MIDDLES: bool> MiddleEncoder<USE_LOWER_MIDDLES>
         i1 + NB_COLORS * i2
     }
 
-    /// turns a triplet (middle_index, orientation_index) into an index
-    fn index_of_middle_orientation(middle_index: u8, orientation_index: usize) -> usize
-    {
-        (middle_index as usize) * NB_ORIENTATIONS + orientation_index
-    }
-
     /// computes a table which associate the index of a color triplet (representing a middle) with a middle index and an orientation
-    fn compute_tables() -> ([(u8, usize); NB_COLOR_PAIRS], [(Color, Color); NB_LEGAL_COLOR_TRIPLETS])
+    fn compute_table_middle_of_pair() -> [(u8, usize); NB_COLOR_PAIRS]
     {
         // all possible pairs of colors making a middle
         let middle_pairs = vec![(Color::Orange, Color::Green),
@@ -129,24 +117,17 @@ impl<const USE_LOWER_MIDDLES: bool> MiddleEncoder<USE_LOWER_MIDDLES>
 
         // builds the table
         let mut t2co = [(0, 0); NB_COLOR_PAIRS];
-        let mut co2t = [(Color::Invalid, Color::Invalid); NB_LEGAL_COLOR_TRIPLETS];
         for (middle_index, (c1, c2)) in middle_pairs.into_iter().enumerate()
         {
             // all possible permutations of the tree colors
             let middle_index = middle_index as u8;
-
             let index = Self::index_of_color_pair(c1, c2);
             t2co[index] = (middle_index, 0);
-            let index = Self::index_of_middle_orientation(middle_index, 0);
-            co2t[index] = (c1, c2);
-
             let index = Self::index_of_color_pair(c2, c1);
             t2co[index] = (middle_index, 1);
-            let index = Self::index_of_middle_orientation(middle_index, 1);
-            co2t[index] = (c2, c1);
         }
 
-        (t2co, co2t)
+        t2co
     }
 
     /// list the indexes for all the middles
@@ -198,9 +179,6 @@ impl<const USE_LOWER_MIDDLES: bool> MiddleEncoder<USE_LOWER_MIDDLES>
 
         middles_coordinates
     }
-
-    //-------------------------------------------------------------------------
-    // ENCODER
 
     /// takes a middle index and shifts it so that it is one of the first NB_MIDDLES_KEPT indexes
     /// (depending on whether we are keeping the first or last middles)

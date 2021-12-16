@@ -89,17 +89,6 @@ impl CornerEncoder
         i1 + Self::NB_COLORS * (i2 + Self::NB_COLORS * i3)
     }
 
-    /// turns a triplet (corner_index, orientation_index, is_top) into an index
-    fn index_of_corner_orientation(corner_index: u8, mut orientation_index: usize, is_top: bool) -> usize
-    {
-        // there are twice as many orientation if we take the top/bottom aspect into account
-        if is_top
-        {
-            orientation_index += Self::NB_ORIENTATIONS;
-        }
-        (corner_index as usize) + orientation_index * Self::NB_CORNERS
-    }
-
     /// computes a table which associate the index of a color triplet (representing a corner) with a corner index and an orientation
     fn compute_table_corner_of_triplet() -> [(u8, usize); Self::NB_COLOR_TRIPLETS]
     {
