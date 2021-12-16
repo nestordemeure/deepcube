@@ -5,7 +5,7 @@ pub use table::{CornerHeuristic, LowerMiddleHeuristic, UpperMiddleHeuristic};
 mod korf;
 pub use korf::KorfHeuristic;
 mod average;
-pub use average::AverageHeuristic;
+pub use average::{AverageHeuristic, SumHeuristic};
 mod counter;
 pub use counter::CounterHeuristic;
 // for serialization

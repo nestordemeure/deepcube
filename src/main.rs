@@ -3,7 +3,7 @@ mod utils;
 mod cube;
 mod solver;
 pub use crate::solver::heuristic::{Heuristic, KorfHeuristic, LowerMiddleHeuristic, UpperMiddleHeuristic,
-                               CornerHeuristic, AverageHeuristic};
+                               CornerHeuristic, SumHeuristic};
 
 // sets the allocator to jemalloc
 #[global_allocator]
@@ -65,8 +65,8 @@ fn main()
             let korf_heuristic =
                 KorfHeuristic { corners_heuristic, lower_middles_heuristic, upper_middles_heuristic };
             korf_heuristic.save("./data/korf_heuristic.bin");
-            //let average_heuristic = AverageHeuristic { corners_heuristic, lower_middles_heuristic, upper_middles_heuristic };
-            //average_heuristic.save("./data/average_heuristic.bin");
+            //let average_heuristic = SumHeuristic { corners_heuristic, lower_middles_heuristic, upper_middles_heuristic };
+            //average_heuristic.save("./data/sum_heuristic.bin");
         }
         RunType::TestRun =>
         {
