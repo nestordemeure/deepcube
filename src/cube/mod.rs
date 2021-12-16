@@ -56,13 +56,13 @@ impl Cube
             let mut new_cubes = Vec::new();
             for cube in cubes
             {
-                for axis in RotationAxis::into_enum_iter()
+                // NOTE: there is probably a way to remove the clone but no need to bother for so few iterations
+                let is_new = result.insert(cube.clone());
+                if is_new
                 {
-                    // NOTE: there is probably a way to remove the clone but no need to bother for so few iterations
-                    let new_cube = cube.rotate(axis);
-                    let is_new = result.insert(new_cube.clone());
-                    if is_new
+                    for axis in RotationAxis::into_enum_iter()
                     {
+                        let new_cube = cube.rotate(axis);
                         new_cubes.push(new_cube);
                     }
                 }
@@ -87,7 +87,7 @@ impl Cube
             // gets the color of the face, all elements should be of this color
             let face_color = face[0];
             // returns early if at least one element is not of the target color
-            if face.iter().any(|color| *color != face_color)
+            if face.iter().skip(1).any(|color| *color != face_color)
             {
                 return false;
             }
@@ -103,10 +103,10 @@ impl Cube
     }
 
     /// scrambles the cube a given number of times to produce a new, random, cube
-    pub fn scramble(&self, nb_scramble: usize) -> Cube
+    pub fn scramble(self, nb_scramble: usize) -> Cube
     {
         let mut rng = rand::thread_rng();
-        let mut result = self.clone();
+        let mut result = self;
         let moves = Move::all_moves();
         for _i in 0..nb_scramble
         {

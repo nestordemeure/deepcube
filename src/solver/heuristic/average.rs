@@ -46,7 +46,7 @@ impl<const USE_RAW_SUM: bool> Heuristic for RawAverageHeuristic<USE_RAW_SUM>
 impl<const USE_RAW_SUM: bool> RawAverageHeuristic<USE_RAW_SUM>
 {
     /// initialize the heuristic
-    pub fn new(use_raw_sum: bool) -> Self
+    pub fn new() -> Self
     {
         let corners_heuristic = CornerHeuristic::new();
         let lower_middles_heuristic = LowerMiddleHeuristic::new();
