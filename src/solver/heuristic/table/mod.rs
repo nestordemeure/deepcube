@@ -25,7 +25,7 @@ impl<E: Encoder> Heuristic for TableHeuristic<E>
     /// returns a lower bound on the number of steps before the problem will be solved
     fn optimistic_distance_to_solved(&self, cube: &Cube) -> u8
     {
-        let index = self.encoder.encode(&cube);
+        let index = self.encoder.encode(cube);
         self.table[index]
     }
 }
@@ -52,10 +52,17 @@ impl<E: Encoder> TableHeuristic<E>
         {
             // iterates at the given depth from all solved cubes
             let mut nb_new_cubes = 0;
+            let mut known_cubes = vec![false; table_size];
             for cube in solved_cubes.iter()
             {
-                nb_new_cubes +=
-                    Self::iterative_deepening(cube.clone(), &moves, &mut table, &encoder, 0, depth);
+                Self::iterative_deepening(cube,
+                                          &moves,
+                                          &mut known_cubes,
+                                          &mut table,
+                                          &mut nb_new_cubes,
+                                          &encoder,
+                                          0,
+                                          depth);
             }
 
             // displays the current result
@@ -91,40 +98,51 @@ impl<E: Encoder> TableHeuristic<E>
     }
 
     /// registers all new cubes at depth max_depth
-    /// returns the number of new cubes found
-    fn iterative_deepening(cube: Cube,
+    fn iterative_deepening(cube: &Cube,
                            moves: &[Move],
+                           known_cubes: &mut [bool],
                            table: &mut [Option<u8>],
+                           nb_new_cubes: &mut usize,
                            encoder: &E,
                            depth: u8,
                            max_depth: u8)
-                           -> usize
     {
+        let index = encoder.encode(cube);
         if depth == max_depth
         {
             // we are on the border, registers the cube
-            let index = encoder.encode(&cube);
-            match table[index]
+            if table[index].is_none()
             {
-                None =>
-                {
-                    table[index] = Some(depth);
-                    1
-                }
-                Some(_) => 0
+                table[index] = Some(depth);
+                *nb_new_cubes += 1;
             }
         }
-        else
+        else if !known_cubes[index]
         {
+            // registers cube
+            known_cubes[index] = true;
+
             // goes further in depth
-            let mut nb_new_cells = 0;
             for m in moves.iter()
             {
                 let child_cube = cube.apply_move(m);
-                nb_new_cells +=
-                    Self::iterative_deepening(child_cube, moves, table, encoder, depth + 1, max_depth);
+                Self::iterative_deepening(&child_cube,
+                                          moves,
+                                          known_cubes,
+                                          table,
+                                          nb_new_cubes,
+                                          encoder,
+                                          depth + 1,
+                                          max_depth);
             }
-            nb_new_cells
         }
+    }
+}
+
+impl<E: Encoder> Default for TableHeuristic<E>
+{
+    fn default() -> Self
+    {
+        Self::new()
     }
 }

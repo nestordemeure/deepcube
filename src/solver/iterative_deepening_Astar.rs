@@ -137,6 +137,5 @@ impl Cube
                 }
             }
         }
-        panic!()
     }
 }
