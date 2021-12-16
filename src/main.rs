@@ -2,7 +2,7 @@
 mod utils;
 mod cube;
 mod solver;
-pub use crate::solver::heuristic::{Heuristic, KorfHeuristic, MiddlesHeuristic, CornersHeuristic};
+pub use crate::solver::heuristic::{Heuristic, KorfHeuristic, MiddlesHeuristic, CornersHeuristic, AverageHeuristic};
 
 // sets the allocator to jemalloc
 #[global_allocator]
@@ -22,10 +22,43 @@ enum RunType
 fn main()
 {
     // action to be done when running code
-    let runtype = RunType::SolveCube(7);
+    let runtype = RunType::GenerateHeuristicTables; //SolveCube(7);
 
     match runtype
     {
+        RunType::SolveCube(nb_scramble) =>
+        {
+            // generate a scrambled cube
+            let cube = cube::Cube::solved().scramble(nb_scramble);
+            println!("Scrambled cube:");
+            cube.display();
+            // gets an heuristic
+            //let heuristic = KorfHeuristic::load("./data/korf_heuristic.bin");
+            let heuristic = AverageHeuristic::load("./data/average_heuristic.bin");
+            // solves the cube
+            //let path = cube.solve_breath_first_search();
+            //let path = cube.solve_iterative_deepening();
+            let path = cube.solve_best_first_search(&heuristic);
+            let cube = cube.apply_path(&path);
+            // displays result
+            println!("Solved cube:");
+            cube.display();
+        }
+        RunType::GenerateHeuristicTables =>
+        {
+            // saves corners heuristics
+            //let corners_heuristic = CornersHeuristic::new();
+            //corners_heuristic.save("./data/corners_heuristic.bin");
+            let corners_heuristic = CornersHeuristic::load("./data/corners_heuristic.bin");
+            // saves middles heuristics
+            let middles_heuristic = MiddlesHeuristic::new();
+            middles_heuristic.save("./data/middles_heuristic.bin");
+            // saves korf heuristics
+            // built by recycling the previous two heuristics
+            //let middles_heuristic = MiddlesHeuristic::load("./data/middles_heuristic.bin");
+            let korf_heuristic = KorfHeuristic { corners_heuristic, middles_heuristic };
+            korf_heuristic.save("./data/korf_heuristic.bin");
+        }
         RunType::TestRun =>
         {
             // test the display function
@@ -63,35 +96,6 @@ fn main()
             //let _corners_heuristic = CornersHeuristic::new();
             let middles_heuristic = MiddlesHeuristic::new();
             middles_heuristic.save("./data/middles_heuristic.bin");
-        }
-        RunType::GenerateHeuristicTables =>
-        {
-            // saves corners heuristics
-            let corners_heuristic = CornersHeuristic::new();
-            corners_heuristic.save("./data/corners_heuristic.bin");
-            // saves middles heuristics
-            let middles_heuristic = MiddlesHeuristic::new();
-            middles_heuristic.save("./data/middles_heuristic.bin");
-            // saves korf heuristics
-            // built by recycling the previous two heuristics
-            //let corners_heuristic = CornersHeuristic::load("./data/corners_heuristic.bin");
-            //let middles_heuristic = MiddlesHeuristic::load("./data/middles_heuristic.bin");
-            let korf_heuristic = KorfHeuristic { corners_heuristic, middles_heuristic };
-            korf_heuristic.save("./data/korf_heuristic.bin");
-        }
-        RunType::SolveCube(nb_scramble) =>
-        {
-            // generate a scrambled cube
-            let cube = cube::Cube::solved().scramble(nb_scramble);
-            println!("Scrambled cube:");
-            cube.display();
-            // solves the cube
-            let heuristic = KorfHeuristic::load("./data/korf_heuristic.bin");
-            let path = cube.solve_breath_first_search();
-            let cube = cube.apply_path(&path);
-            // displays result
-            println!("Solved cube:");
-            cube.display();
         }
     }
 }

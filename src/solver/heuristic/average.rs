@@ -17,16 +17,15 @@ impl Heuristic for AverageHeuristic
     fn optimistic_distance_to_solved(&self, cube: &Cube) -> u8
     {
         // computes the individual heuristics
-        let corners_distance = self.corners_heuristic.optimistic_distance_to_solved(cube) as usize;
-        let middles_distance_lower =
-            self.middles_heuristic.optimistic_distance_to_solved_lower(cube) as usize;
-        let middles_distance_upper =
-            self.middles_heuristic.optimistic_distance_to_solved_upper(cube) as usize;
+        let corners_distance = self.corners_heuristic.optimistic_distance_to_solved(cube);
+        let middles_distance_lower = self.middles_heuristic.optimistic_distance_to_solved_lower(cube);
+        let middles_distance_upper = self.middles_heuristic.optimistic_distance_to_solved_upper(cube);
         // assemble the heuristics
         // we use usize to avoid overflows here
         let sum_distances = corners_distance + middles_distance_lower + middles_distance_upper;
-        let average_ceil = (sum_distances + 2) / 3;
-        average_ceil as u8
+        //let average_ceil = (sum_distances + 2) / 3;
+        //average_ceil
+        sum_distances
     }
 }
 

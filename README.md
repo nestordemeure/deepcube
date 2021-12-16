@@ -23,13 +23,21 @@ The heuristic precomputations would be easy to paralelize but this increase memo
     - ability to save and load precomputed tables on disk
     - ability to wrap heuristics to count the number of heuristic calls
 
+- solvers:
+    - best first search
+    - breath first search
+    - iterative deepening
+
 ## TODO
 
 - solvers:
-    - Best First Search (?)
-    - Dijskra (tested on small scramble)
-    - A*
+    - best first search
+        - introduce random tie-break in minimum to avoid loops
+    - breath first search
+        - modify vector in place to decrease memory use
+        - check for solve *when creating a child* in order to gain one level of depth with no additional memory use
     - IDA*
+    - A*
     - Recursive Best First Search
     - my own solver
         - guided by a sum of heuristics
