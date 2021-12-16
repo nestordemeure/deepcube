@@ -72,7 +72,7 @@ impl<E: Encoder> TableHeuristic<E>
                 timer.stop();
                 println!("Corners done! (maximum distance:{} table size:{} computing time:{:?})",
                          depth,
-                         table.len(),
+                         table_size,
                          timer.elapsed());
                 break;
             }
@@ -107,33 +107,38 @@ impl<E: Encoder> TableHeuristic<E>
                            depth: u8,
                            max_depth: u8)
     {
+        // avoids running code on known cubes
         let index = encoder.encode(cube);
-        if depth == max_depth
-        {
-            // we are on the border, registers the cube
-            if table[index].is_none()
-            {
-                table[index] = Some(depth);
-                *nb_new_cubes += 1;
-            }
-        }
-        else if !known_cubes[index]
+        let is_known = known_cubes[index];
+        if !is_known
         {
             // registers cube
             known_cubes[index] = true;
 
-            // goes further in depth
-            for m in moves.iter()
+            if depth == max_depth
             {
-                let child_cube = cube.apply_move(m);
-                Self::iterative_deepening(&child_cube,
-                                          moves,
-                                          known_cubes,
-                                          table,
-                                          nb_new_cubes,
-                                          encoder,
-                                          depth + 1,
-                                          max_depth);
+                // we are at the depth limit, registers the cube
+                if table[index].is_none()
+                {
+                    table[index] = Some(depth);
+                    *nb_new_cubes += 1;
+                }
+            }
+            else
+            {
+                // goes further in depth
+                for m in moves.iter()
+                {
+                    let child_cube = cube.apply_move(m);
+                    Self::iterative_deepening(&child_cube,
+                                              moves,
+                                              known_cubes,
+                                              table,
+                                              nb_new_cubes,
+                                              encoder,
+                                              depth + 1,
+                                              max_depth);
+                }
             }
         }
     }
@@ -146,3 +151,9 @@ impl<E: Encoder> Default for TableHeuristic<E>
         Self::new()
     }
 }
+
+/*
+the known cube mecanism results in having less cubes per depth that we should
+also that number *changes* from one iteration to the next
+one explaination could be non-injectivity or the encoder function (it does not explain the non determinism)
+*/

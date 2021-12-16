@@ -13,6 +13,9 @@ using a modulo one can easily reverse the operation:
 decoding(x, nb_elements) = [decoding(x/nb_elements, nb_elements-1).., x%nb_elements]
 */
 
+//-------------------------------------------------------------------------------------------------
+// PERMUTATION
+
 /// returns the number of permutations possible with the given number of elements
 /// NOTE: this function should be const
 pub fn nb_permutations(nb_elements: usize) -> usize
@@ -43,7 +46,7 @@ pub fn decimal_from_permutation<const NB_ELEMENTS: usize>(permutation: &[u8; NB_
     let mut base = 1;
 
     // adds elements one after the other
-    // we skip the last elements as ot will necesearily be 0
+    // we skip the last elements as it will necesearily be 0
     for i in permutation.iter().take(NB_ELEMENTS - 1).map(|i| *i as usize)
     {
         // gets shifted index
@@ -86,6 +89,9 @@ pub fn permutation_from_decimal<const NB_ELEMENTS: usize>(mut decimal: usize) ->
 
     permutation
 }
+
+//-------------------------------------------------------------------------------------------------
+// PARTIAL PERMUTATION
 
 /// returns the number of permutations possible with nb_elements
 /// sampled from a larger nb_elements_total (n pick k computation)

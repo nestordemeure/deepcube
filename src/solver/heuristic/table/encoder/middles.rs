@@ -18,8 +18,6 @@ const NB_ORIENTATIONS: usize = 2;
 const NB_COLORS: usize = NB_FACES;
 /// number of possible pair of colors
 const NB_COLOR_PAIRS: usize = NB_COLORS * NB_COLORS;
-/// number of legal, present on actual cubes, triplet of colors
-const NB_LEGAL_COLOR_TRIPLETS: usize = NB_ORIENTATIONS * NB_MIDDLES;
 
 /// used to turn a cube into a single, unique and consecutiv, middles code
 /// and back again

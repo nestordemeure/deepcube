@@ -66,7 +66,7 @@ impl CornerEncoder
     const NB_CORNERS: usize = 8;
 
     /// number of possible orientations for a corner
-    const NB_ORIENTATIONS: usize = 3; // 3 knowing the corner
+    const NB_ORIENTATIONS: usize = 3;
 
     /// number of different colors
     const NB_COLORS: usize = NB_FACES;
@@ -74,11 +74,8 @@ impl CornerEncoder
     /// number of possible triplet of colors
     const NB_COLOR_TRIPLETS: usize = Self::NB_COLORS * Self::NB_COLORS * Self::NB_COLORS;
 
-    /// number of legal, present on actual cubes, triplet of colors
-    const NB_LEGAL_COLOR_TRIPLETS: usize = Self::NB_ORIENTATIONS * 2 * Self::NB_CORNERS;
-
     //-------------------------------------------------------------------------
-    // PRECOMPUTATION
+    // INDEXING TABLES
 
     /// turns a triplet of colors into an index
     fn index_of_color_triplet(c1: Color, c2: Color, c3: Color) -> usize
@@ -107,6 +104,7 @@ impl CornerEncoder
         for (corner_index, (c1, c2, c3)) in corner_triplets.into_iter().enumerate()
         {
             // all possible permutations of the tree colors
+            // note that some permutation are associated with the same orientation as some orientation are not possible
             let corner_index = corner_index as u8;
             let index = CornerEncoder::index_of_color_triplet(c1, c2, c3);
             t2co[index] = (corner_index, 0);
