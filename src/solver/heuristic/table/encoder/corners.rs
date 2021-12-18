@@ -29,7 +29,8 @@ impl Encoder for CornerEncoder
     /// size of the array in which to put the indexes
     fn nb_indexes() -> usize
     {
-        nb_permutations(Self::NB_CORNERS) * Self::NB_ORIENTATIONS.pow(Self::NB_CORNERS as u32)
+        let nb_orientable_corners = Self::NB_CORNERS - 1; // the orientation of the last corner is fixed given the others
+        nb_permutations(Self::NB_CORNERS) * Self::NB_ORIENTATIONS.pow(nb_orientable_corners as u32)
     }
 
     /// takes a cube
@@ -52,8 +53,13 @@ impl Encoder for CornerEncoder
             permutation[i] = corner_index;
             total_orientation_index = total_orientation_index * Self::NB_ORIENTATIONS + orientation_index;
         }
+        // ignores the last corner as its orientation is given by the other corners
+        total_orientation_index /= Self::NB_ORIENTATIONS;
+        // converts the permutation into an index
         let permutation_index = decimal_from_permutation(&permutation);
-        permutation_index + total_orientation_index * nb_permutations(Self::NB_CORNERS)
+        // merges the two indexes
+        let nb_orientable_corners = Self::NB_CORNERS - 1;
+        permutation_index * Self::NB_ORIENTATIONS.pow(nb_orientable_corners as u32) + total_orientation_index
     }
 }
 
@@ -90,33 +96,36 @@ impl CornerEncoder
     fn compute_table_corner_of_triplet() -> [(u8, usize); Self::NB_COLOR_TRIPLETS]
     {
         // all possible triplets of colors making a corner
-        let corner_triplets = vec![(Color::Orange, Color::Green, Color::White),
-                                   (Color::White, Color::Green, Color::Red),
-                                   (Color::Green, Color::Yellow, Color::Red),
-                                   (Color::Orange, Color::Yellow, Color::Green),
-                                   (Color::Yellow, Color::Blue, Color::Red),
-                                   (Color::Red, Color::Blue, Color::White),
-                                   (Color::Orange, Color::White, Color::Blue),
-                                   (Color::Blue, Color::Yellow, Color::Orange)];
+        let corner_triplets = vec![(Color::Orange, Color::Blue, Color::White),
+                                   (Color::Orange, Color::Yellow, Color::Blue),
+                                   (Color::Orange, Color::Green, Color::Yellow),
+                                   (Color::Orange, Color::White, Color::Green),
+                                   (Color::Red, Color::Yellow, Color::Green),
+                                   (Color::Red, Color::Blue, Color::Yellow),
+                                   (Color::Red, Color::White, Color::Blue),
+                                   (Color::Red, Color::Green, Color::White)];
 
         // builds the table
         let mut t2co = [(0, 0); Self::NB_COLOR_TRIPLETS];
         for (corner_index, (c1, c2, c3)) in corner_triplets.into_iter().enumerate()
         {
             // all possible permutations of the tree colors
-            // note that some permutation are associated with the same orientation as some orientation are not possible
+            // note that some permutation are associated with the same orientation
+            // as some orientation are  only possible for some indexes
             let corner_index = corner_index as u8;
             let index = CornerEncoder::index_of_color_triplet(c1, c2, c3);
             t2co[index] = (corner_index, 0);
             let index = CornerEncoder::index_of_color_triplet(c1, c3, c2);
             t2co[index] = (corner_index, 0);
-            let index = CornerEncoder::index_of_color_triplet(c2, c1, c3);
-            t2co[index] = (corner_index, 1);
+
             let index = CornerEncoder::index_of_color_triplet(c2, c3, c1);
             t2co[index] = (corner_index, 1);
-            let index = CornerEncoder::index_of_color_triplet(c3, c2, c1);
-            t2co[index] = (corner_index, 2);
+            let index = CornerEncoder::index_of_color_triplet(c2, c1, c3);
+            t2co[index] = (corner_index, 1);
+
             let index = CornerEncoder::index_of_color_triplet(c3, c1, c2);
+            t2co[index] = (corner_index, 2);
+            let index = CornerEncoder::index_of_color_triplet(c3, c2, c1);
             t2co[index] = (corner_index, 2);
         }
 
@@ -135,10 +144,10 @@ impl CornerEncoder
         let mut corners_coordinates = [(0, 0, 0); Self::NB_CORNERS];
         for ((lr, du, fb), corner_result) in coordinates.into_iter().zip(corners_coordinates.iter_mut())
         {
-            let c_lr = Coordinate3D::new(lr, du, fb, RotationAxis::LeftRight).to_1D().x;
             let c_du = Coordinate3D::new(lr, du, fb, RotationAxis::DownUp).to_1D().x;
+            let c_lr = Coordinate3D::new(lr, du, fb, RotationAxis::LeftRight).to_1D().x;
             let c_fb = Coordinate3D::new(lr, du, fb, RotationAxis::FrontBack).to_1D().x;
-            *corner_result = (c_lr, c_du, c_fb);
+            *corner_result = (c_du, c_lr, c_fb);
         }
 
         corners_coordinates

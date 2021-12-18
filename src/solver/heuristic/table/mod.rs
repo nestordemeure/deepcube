@@ -67,7 +67,7 @@ impl<E: Encoder> TableHeuristic<E>
             }
 
             // displays the current result
-            if nb_new_cubes == 0
+            if current_table_size == table_size
             {
                 // display final informations on the table
                 timer.stop();
@@ -147,3 +147,7 @@ impl<E: Encoder> Default for TableHeuristic<E>
         Self::new()
     }
 }
+
+/*
+we currently have exactly a third of values
+*/

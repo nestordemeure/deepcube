@@ -31,9 +31,6 @@ The heuristic precomputations would be easy to paralelize but this increase memo
 
 ## TODO
 
-apparently my korf heuristic is not optimistic, there is probably a bug somewhere...
-(can be check by running both the heuristic and a solver to see if the heuristic's value is always lower)
-
 - cube:
     - add function producing the worst cube possible (solve in 20 moves)
 
@@ -50,7 +47,7 @@ apparently my korf heuristic is not optimistic, there is probably a bug somewher
     - IDA*:
         - deal with fact that length of path might be longer than actual length of solution
     - best first search
-        - introduce random tie-break in minimum to avoid loops
+        - introduce random tie-break in minimum to avoid loops?
     - breath first search
         - modify vector in place to decrease memory use
         - check for solve *when creating a child* in order to gain one level of depth with no additional memory use
@@ -66,10 +63,12 @@ apparently my korf heuristic is not optimistic, there is probably a bug somewher
 
 The paper [Finding Optimal Solutions to Rubik's Cube Using Pattern Databases](https://www.cs.princeton.edu/courses/archive/fall06/cos402/papers/korfrubik.pdf) by Richard Korf is *the* reference when it comes to solve Rubik's cube optimally.
 
+[deepCubeA](https://github.com/forestagostinelli/DeepCubeA) is a machine learning project using deep learnign and reinforcement learning to design a neural network able to solve a Rubik's cube.
+However, while their network manages to solve 100% of Rubik's cube they tested, they do not aim for optimal solutions (they found that about 60% of the solution suggested by the network were optimal).
+
 There is another interesting Rubik's cube implementation in rust, [Rusty-Rubik](https://github.com/esqu1/Rusty-Rubik).
 They represent the cube in term of permutations and orientations of corners and middles pieces (instead of a flat representation as we do here) which makes computing the heuristics much more efficient.
 Furthermore, they use slightly different heuristics (decoupling the permutation and orientation of middles which sounds like a good idea to do all middles at once).
 However, they implement less solvers.
 
-[deepCubeA](https://github.com/forestagostinelli/DeepCubeA) is a machine learning project using deep learnign and reinforcement learning to design a neural network able to solve a Rubik's cube.
-However, while their network manages to solve 100% of Rubik's cube they tested, they do not aim for optimal solutions (they found that about 60% of the solution suggested by the network were optimal).
+You can find a good Rubik's cube online simulator [here](https://ruwix.com/online-puzzle-simulators/).

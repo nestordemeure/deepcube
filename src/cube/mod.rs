@@ -102,6 +102,17 @@ impl Cube
         self.squares[index]
     }
 
+    /// creates a new, scrambled, cube
+    pub fn scrambled(nb_scramble: usize) -> Cube
+    {
+        // selects a solved cube at random
+        let solved_cubes = Cube::all_solved_cubes();
+        let mut rng = rand::thread_rng();
+        let cube = solved_cubes.choose(&mut rng).unwrap();
+        // scrambles the solved cube
+        cube.clone().scramble(nb_scramble)
+    }
+
     /// scrambles the cube a given number of times to produce a new, random, cube
     pub fn scramble(self, nb_scramble: usize) -> Cube
     {

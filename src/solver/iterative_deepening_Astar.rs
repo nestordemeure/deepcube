@@ -131,7 +131,8 @@ impl Cube
                 }
                 println!("doing depth {}", target_depth);
                 // increases the size of the path for the next iteration
-                while path.len() < target_depth
+                while path.len() <= target_depth
+                // TODO this can lead to a path that is one too long
                 {
                     path.push(dummy_move);
                 }
