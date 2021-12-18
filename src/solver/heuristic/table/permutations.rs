@@ -12,7 +12,6 @@ encoding(n element) is between 0 and n! excluded
 using a modulo one can easily reverse the operation:
 decoding(x, nb_elements) = [decoding(x/nb_elements, nb_elements-1).., x%nb_elements]
 */
-use lehmer::Lehmer;
 
 //-------------------------------------------------------------------------------------------------
 // PERMUTATION
@@ -22,19 +21,18 @@ use lehmer::Lehmer;
 pub fn nb_permutations(nb_elements: usize) -> usize
 {
     // factorial(nb_elements)
-    /*let mut product = 1;
+    let mut product = 1;
     for i in 2..=nb_elements
     {
         product *= i;
     }
-    product*/
-    Lehmer::max_value(nb_elements) + 1
+    product
 }
 
 /// turns a permutation into a decimal number
 pub fn decimal_from_permutation<const NB_ELEMENTS: usize>(permutation: &[u8; NB_ELEMENTS]) -> usize
 {
-    /*// the result we will return
+    // the result we will return
     let mut result = 0;
     // represents the indices shifted after each value removal
     let mut shifted_indices = [0; NB_ELEMENTS];
@@ -65,8 +63,7 @@ pub fn decimal_from_permutation<const NB_ELEMENTS: usize>(permutation: &[u8; NB_
         nb_elements_left -= 1;
     }
 
-    result*/
-    Lehmer::from_permutation(permutation).to_decimal()
+    result
 }
 
 /// turns a decimal number into a partial permutation
