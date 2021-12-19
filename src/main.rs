@@ -45,7 +45,8 @@ fn main()
             //let path = cube.solve_breath_first_search();
             //let path = cube.solve_best_first_search(&heuristic);
             //let path = cube.solve_iterative_deepening();
-            let path = cube.solve_iterative_deepening_Astar(&heuristic);
+            //let path = cube.solve_iterative_deepening_Astar(&heuristic);
+            let path = cube.solve_iterative_deepening_Astar_parallel(&heuristic);
 
             // displays result
             println!("Solved cube:");

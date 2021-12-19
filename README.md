@@ -43,8 +43,6 @@ The heuristic precomputations would be easy to paralelize but this increase memo
         - use it as an imperfect heuristic
 
 - solvers:
-    - IDA*:
-        - paralelize search
     - best first search
         - introduce random tie-break in minimum to avoid loops?
     - breath first search
