@@ -24,7 +24,7 @@ fn main()
 {
     // action to be done when running code
     //let runtype = RunType::GenerateHeuristicTables;
-    let runtype = RunType::SolveCube(5);
+    let runtype = RunType::SolveCube(7);
 
     match runtype
     {
@@ -45,7 +45,7 @@ fn main()
             //let path = cube.solve_breath_first_search();
             //let path = cube.solve_best_first_search(&heuristic);
             //let path = cube.solve_iterative_deepening();
-            //let path = cube.solve_iterative_deepening_Astar(&heuristic);
+            let path = cube.solve_iterative_deepening_Astar(&heuristic);
             let path = cube.solve_iterative_deepening_Astar_parallel(&heuristic);
 
             // displays result

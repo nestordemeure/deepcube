@@ -155,11 +155,11 @@ impl Cube
         // all moves that can be applied to a cube
         let moves = Move::all_moves();
         let dummy_move = MoveDescription { kind: MoveKind::Front, amplitude: Amplitude::Clockwise };
+        let mut path = Vec::new();
 
         // tries a depth 0
         if self.is_solved()
         {
-            let path = Vec::new();
             println!("Done! Found a path of length 0 in {:?} (0 cubes expanded / 0 heuristic call)",
                      timer.elapsed());
             println!("Path: {:?}", path);
@@ -167,45 +167,44 @@ impl Cube
         }
 
         // does a single expansion and uses the result as our starting point
-        let cubes_paths: Vec<(Cube, Vec<MoveDescription>)> = moves.iter()
+        let cubes_paths: Vec<(Cube, MoveDescription)> = moves.iter()
                                                                   .map(|m| {
                                                                       let cube = self.apply_move(m);
-                                                                      let path = vec![m.description];
-                                                                      (cube, path)
+                                                                      (cube, m.description)
                                                                   })
                                                                   .collect();
+        path.push(dummy_move);
         let nb_cube_expanded = AtomicUsize::new(1);
         let nb_heuristic_calls = AtomicUsize::new(0);
-        let mut shifted_target_depth = 0;
+        let mut target_depth = 1;
         loop
         {
             // tries to find a solution at the given depth
             // does it in parallel over the once expanded cubes
             let next_depth = AtomicUsize::new(usize::MAX);
             let path_option =
-                cubes_paths.par_iter().find_map_any(|(cube, path)| {
+                cubes_paths.par_iter().find_map_any(|(cube, description)| {
                                           // increases the size of the path for the iteration
                                           // we let the path be one element longer than the length as our research will be one ahead
-                                          let mut path = path.clone();
-                                          while path.len() <= shifted_target_depth
-                                          {
-                                              path.push(dummy_move);
-                                          }
+                                          let shifted_target_depth = target_depth - 1;
                                           let cube = cube.clone();
+                                          let mut path_thread = path.clone();
+                                          path_thread[0] = *description;
                                           let mut next_depth_thread = usize::MAX; // upper bound on the depth of the optimal solution
                                           let mut nb_cube_expanded_thread = 0;
                                           let mut nb_heuristic_calls_thread = 0;
                                           let is_solved = Cube::solve_iterative_deepening_Astar_rec(cube,
-                         &mut path,
-                         &moves,
-                         heuristic,
-                         &mut nb_cube_expanded_thread,
-                         &mut nb_heuristic_calls_thread,
-                         0,
-                         shifted_target_depth,
-                         &mut next_depth_thread);
+                                                                                                            &mut path_thread[1..],
+                                                                                                            &moves,
+                                                                                                            heuristic,
+                                                                                                            &mut nb_cube_expanded_thread,
+                                                                                                            &mut nb_heuristic_calls_thread,
+                                                                                                         0,
+                                                                                                       shifted_target_depth,
+                                                                                                        &mut next_depth_thread);
                                           // updates the counters
-                                          next_depth.fetch_min(next_depth_thread, Ordering::Relaxed);
+                                          let shifted_next_depth = if next_depth_thread == usize::MAX {target_depth+1} else {next_depth_thread + 1};
+                                          next_depth.fetch_min(shifted_next_depth, Ordering::Relaxed);
                                           nb_cube_expanded.fetch_add(nb_cube_expanded_thread,
                                                                      Ordering::Relaxed);
                                           nb_heuristic_calls.fetch_add(nb_heuristic_calls_thread,
@@ -213,7 +212,7 @@ impl Cube
                                           // returns the result if we suceeded
                                           if is_solved
                                           {
-                                              Some(path)
+                                              Some(path_thread)
                                           }
                                           else
                                           {
@@ -223,7 +222,6 @@ impl Cube
             let next_depth = next_depth.into_inner();
 
             // checks if we reached the target
-            let target_depth = shifted_target_depth + 1;
             match path_option
             {
                 Some(mut path) =>
@@ -248,15 +246,14 @@ impl Cube
                             nb_cube_expanded.load(Ordering::Relaxed), 
                             nb_heuristic_calls.load(Ordering::Relaxed));
                     // updates the target depth
-                    if next_depth == usize::MAX
-                    {
-                        shifted_target_depth += 1;
-                    }
-                    else
-                    {
-                        shifted_target_depth = next_depth;
-                    }
+                    target_depth = next_depth;
                     println!("doing depth {}", target_depth);
+                                    // increases the size of the path for the next iteration
+                // we let the path be one element longer than the length as our research will be one ahead
+                while path.len() <= target_depth
+                {
+                    path.push(dummy_move);
+                }
                 }
             }
         }
