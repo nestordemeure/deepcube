@@ -131,7 +131,6 @@ impl Cube
                 {
                     target_depth = next_depth;
                 }
-                println!("doing depth {}", target_depth);
                 // increases the size of the path for the next iteration
                 // we let the path be one element longer than the length as our research will be one ahead
                 while path.len() <= target_depth
@@ -247,7 +246,6 @@ impl Cube
                             nb_heuristic_calls.load(Ordering::Relaxed));
                     // updates the target depth
                     target_depth = next_depth;
-                    println!("doing depth {}", target_depth);
                                     // increases the size of the path for the next iteration
                 // we let the path be one element longer than the length as our research will be one ahead
                 while path.len() <= target_depth
