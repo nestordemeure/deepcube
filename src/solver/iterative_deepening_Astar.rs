@@ -21,7 +21,6 @@ impl Cube
         // lower bound on the number of steps needed to do a solve with this move
         *nb_heuristic_calls += 1;
         let minimum_final_depth = depth + heuristic.optimistic_distance_to_solved(&cube) as usize;
-        //println!("depth:{} min:{} total:{}", depth, minimum_final_depth - depth, minimum_final_depth);
         match minimum_final_depth.cmp(&target_depth)
         {
             std::cmp::Ordering::Greater =>
@@ -86,8 +85,6 @@ impl Cube
         let moves = Move::all_moves();
         let dummy_move = MoveDescription { kind: MoveKind::Front, amplitude: Amplitude::Clockwise };
 
-        println!("heuristic: {}", heuristic.optimistic_distance_to_solved(self));
-
         let mut target_depth = 0;
         let mut path = Vec::new();
         loop
@@ -108,6 +105,9 @@ impl Cube
             // checks if we reached the target
             if is_solved
             {
+                // removes the, potentially, one element too many at the end of the path
+                path.truncate(target_depth);
+                // displays the result
                 println!("Done! Found a path of length {} in {:?} ({} cubes expanded / {} heuristic call)",
                          target_depth,
                          timer.elapsed(),
@@ -131,8 +131,8 @@ impl Cube
                 }
                 println!("doing depth {}", target_depth);
                 // increases the size of the path for the next iteration
+                // we let the path be one element longer than the length as our research will be one ahead
                 while path.len() <= target_depth
-                // TODO this can lead to a path that is one too long
                 {
                     path.push(dummy_move);
                 }

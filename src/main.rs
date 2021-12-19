@@ -23,8 +23,8 @@ enum RunType
 fn main()
 {
     // action to be done when running code
-    let runtype = RunType::GenerateHeuristicTables;
-    //let runtype = RunType::SolveCube(5);
+    //let runtype = RunType::GenerateHeuristicTables;
+    let runtype = RunType::SolveCube(5);
 
     match runtype
     {
@@ -34,19 +34,22 @@ fn main()
             let cube = cube::Cube::scrambled(nb_scramble);
             println!("Scrambled cube:");
             cube.display();
+
             // gets an heuristic
             //let heuristic = CornerHeuristic::load("./data/corners_heuristic.bin");
             //let heuristic = LowerMiddleHeuristic::load("./data/lower_middles_heuristic.bin");
             let heuristic = KorfHeuristic::load("./data/korf_heuristic.bin");
             //let heuristic = AverageHeuristic::load("./data/average_heuristic.bin");
+
             // solves the cube
             //let path = cube.solve_breath_first_search();
-            let path = cube.solve_iterative_deepening();
             //let path = cube.solve_best_first_search(&heuristic);
+            //let path = cube.solve_iterative_deepening();
             let path = cube.solve_iterative_deepening_Astar(&heuristic);
-            let cube = cube.apply_path(&path);
+
             // displays result
             println!("Solved cube:");
+            let cube = cube.apply_path(&path);
             cube.display();
         }
         RunType::GenerateHeuristicTables =>

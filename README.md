@@ -44,7 +44,7 @@ The heuristic precomputations would be easy to paralelize but this increase memo
 
 - solvers:
     - IDA*:
-        - deal with fact that length of path might be longer than actual length of solution
+        - paralelize search
     - best first search
         - introduce random tie-break in minimum to avoid loops?
     - breath first search
