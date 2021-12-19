@@ -72,6 +72,7 @@ impl<E: Encoder + Sync> TableHeuristic<E>
             }
 
             // displays the current result
+            current_table_size += nb_new_cubes;
             if current_table_size == table_size
             {
                 // display final informations on the table
@@ -85,7 +86,6 @@ impl<E: Encoder + Sync> TableHeuristic<E>
             else
             {
                 // displays information on the current depth
-                current_table_size += nb_new_cubes;
                 progress_bar.set(current_table_size);
                 println!("Table: did distance {} {} in {:?}", depth, progress_bar, timer.elapsed());
             }
@@ -184,6 +184,7 @@ impl<E: Encoder + Sync> TableHeuristic<E>
             let nb_new_cubes = nb_new_cubes.into_inner();
 
             // take into account the fact that the table size might be approximative
+            current_table_size += nb_new_cubes;
             let stopping_condition = (current_table_size >= table_size)
                                      && table.par_iter()
                                              .all(|distance| distance.load(Ordering::Relaxed) < u8::MAX);
@@ -201,7 +202,6 @@ impl<E: Encoder + Sync> TableHeuristic<E>
             else
             {
                 // displays information on the current depth
-                current_table_size += nb_new_cubes;
                 progress_bar.set(current_table_size);
                 println!("Table: did distance {} {} in {:?}", depth, progress_bar, timer.elapsed());
             }
@@ -230,6 +230,9 @@ impl<E: Encoder + Sync> TableHeuristic<E>
         if depth_cubes[index].load(Ordering::Relaxed) < depth_left
         {
             // registers cube
+            // NOTE: the load then store is not atomic so we might get into this branch by error
+            // this does not impact the final table (all thread are at equal depth)
+            // but the number of new cubes might be artificially raised because of such errors
             depth_cubes[index].store(depth_left, Ordering::Relaxed);
 
             if depth == max_depth
